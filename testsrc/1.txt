@@ -1,0 +1,80 @@
+(compUnit 
+        (compUnitItem 
+            (decl 
+                (varDecl 
+                    (bType int) 
+                    (varDef a) ;))) 
+        (compUnitItem 
+            (funcDef 
+                (funcType 
+                    (bType int)) func ( 
+                (funcFParams 
+                    (funcFParam 
+                        (bType int) p)) ) 
+                (block { 
+                    (blockItem 
+                        (stmt 
+                            (lVal p) = 
+                            (exp 
+                                (addExp 
+                                    (addExp 
+                                        (mulExp 
+                                            (unaryExp 
+                                                (primaryExp 
+                                                    (lVal p))))) - 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 1))))))) ;)) 
+                    (blockItem 
+                        (stmt return 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (lVal p)))))) ;)) }))) 
+        (compUnitItem 
+            (funcDef 
+                (funcType 
+                    (bType int)) main ( ) 
+                (block { 
+                    (blockItem 
+                        (decl 
+                            (varDecl 
+                                (bType int) 
+                                (varDef b) ;))) 
+                    (blockItem 
+                        (stmt 
+                            (lVal a) = 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 10))))))) ;)) 
+                    (blockItem 
+                        (stmt 
+                            (lVal b) = 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp func ( 
+                                            (funcRParams 
+                                                (funcRParam 
+                                                    (exp 
+                                                        (addExp 
+                                                            (mulExp 
+                                                                (unaryExp 
+                                                                    (primaryExp 
+                                                                        (lVal a)))))))) ))))) ;)) 
+                    (blockItem 
+                        (stmt return 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (lVal b)))))) ;)) }))) <EOF>)
