@@ -1,23 +1,59 @@
 
 #include "SysyVisitor.h"
+#include "IRBuilder.h"
 
+std::shared_ptr<IRBuilder> builder;
+
+/// compUnit: compUnitItem* EOF;
+/// \param context
+/// \return
 std::any Visitor::visitCompUnit(SysyParser::CompUnitContext *context)
 {
+    builder = make_shared<IRBuilder>(IRBuilder());
+
+    for (auto &x: context->compUnitItem())
+    {
+        x->accept(this);
+    }
+
     return 0;
 }
 
+/// compUnitItem: decl | funcDef;
+/// \param context
+/// \return
 std::any Visitor::visitCompUnitItem(SysyParser::CompUnitItemContext *context)
 {
+    if (context->decl() != nullptr)
+    {
+        context->decl()->accept(this);
+    } else if (context->funcDef() != nullptr)
+    {
+        context->funcDef()->accept(this);
+    }
     return 0;
 }
 
+
+/// decl: constDecl | varDecl;
+/// \param context
+/// \return
 std::any Visitor::visitDecl(SysyParser::DeclContext *context)
 {
+    if (context->constDecl() != nullptr)
+    {
+        context->constDecl()->accept(this);
+    } else if (context->varDecl() != nullptr)
+    {
+        context->varDecl()->accept(this);
+    }
+
     return 0;
 }
 
 std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext *context)
 {
+
     return 0;
 }
 

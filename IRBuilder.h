@@ -16,17 +16,31 @@ class IRBuilder
 public:
     IRBuilder();
 
-    IRBuilder(std::string filename);
+    explicit IRBuilder(const std::string &filename);
 
-    void addVarDeclStmt(ssize_t t, std::string name);
+    void addGlobalVarDeclStmt(ssize_t t, const std::string &name);
+
+    void addConstVarDeclStmt(ssize_t t, const std::string &name);
 
     void build(std::ostream &os);
+
+    int getNewLabel();
+
+    int getLastLabel();
 
     std::string build();
 
 private:
     std::vector<std::string> _stmts;
     std::string _filename;
+    bool _inGlobalScope = true;
+    int _label = 100;
+public:
+    [[nodiscard]] bool isInGlobalScope() const;
+
+    void setInGlobalScope(bool x);
+
+private:
 
     void _as(const std::string &s);
 };
