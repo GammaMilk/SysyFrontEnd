@@ -2,6 +2,7 @@
    012_func_defn.sy
 */
 int a;
+float bb = 2.3;
 
 int func(int p)
 {

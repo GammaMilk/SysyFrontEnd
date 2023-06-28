@@ -4,12 +4,35 @@
 
 #include "IRSen.h"
 
-IRSen::IRSen()
-{
+IRCtrl::IRSen::IRSen()
+= default;
 
+std::string IRCtrl::IRSen::toString()
+{
+    return {};
 }
 
-std::string IRSen::toString()
+std::string IRCtrl::ConstSen::toString()
 {
-    return nullptr;
+    return {};
+}
+
+std::string IRCtrl::VarSen::toString()
+{
+    return {};
+}
+
+std::string IRCtrl::FunctionSen::toString()
+{
+    return {};
+}
+
+std::string IRCtrl::LogiSen::toString()
+{
+    return std::string();
+}
+
+std::string IRCtrl::IntAlgoSen::toString()
+{
+    return std::string();
 }

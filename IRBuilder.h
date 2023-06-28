@@ -9,41 +9,48 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include "IRLayerController.h"
 
 
-class IRBuilder
+namespace IRCtrl
 {
-public:
-    IRBuilder();
+    class IRBuilder
+    {
+    public:
+        IRBuilder();
 
-    explicit IRBuilder(const std::string &filename);
+        explicit IRBuilder(const std::string &filename);
 
-    void addGlobalVarDeclStmt(ssize_t t, const std::string &name);
+        void addGlobalVarDeclStmt(ssize_t t, const std::string &name);
 
-    void addConstVarDeclStmt(ssize_t t, const std::string &name);
+        void addConstVarDeclStmt(ssize_t t, const std::string &name);
 
-    void build(std::ostream &os);
+        void build(std::ostream &os);
 
-    int getNewLabel();
+        int getNewLabel();
 
-    int getLastLabel();
+        int getLastLabel() const;
 
-    std::string build();
+        std::string build();
 
-private:
-    std::vector<std::string> _stmts;
-    std::string _filename;
-    bool _inGlobalScope = true;
-    int _label = 100;
-public:
-    [[nodiscard]] bool isInGlobalScope() const;
+        bool isInGlobal();
 
-    void setInGlobalScope(bool x);
+    private:
+        std::vector<std::string> _stmts;
+        std::string _filename;
+        bool _inGlobalScope = true;
+        int _label = 100;
+        IRCtrl::IRLayerController _lc;
+    public:
+        [[nodiscard]] bool isInGlobalScope() const;
 
-private:
+        void setInGlobalScope(bool x);
 
-    void _as(const std::string &s);
-};
+    private:
+
+        void _as(const std::string &s);
+    };
+}
 
 
 #endif //SYSYLEX_IRBUILDER_H

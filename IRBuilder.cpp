@@ -8,12 +8,13 @@
 #include <ostream>
 #include <sstream>
 
-IRBuilder::IRBuilder()
+IRCtrl::IRBuilder::IRBuilder()
 {
+    FunctionSen sen;
     _as("");
 }
 
-void IRBuilder::addGlobalVarDeclStmt(ssize_t t, const std::string &name)
+void IRCtrl::IRBuilder::addGlobalVarDeclStmt(ssize_t t, const std::string &name)
 {
     std::string ts;
     if (t == SysyParser::Int)
@@ -23,10 +24,10 @@ void IRBuilder::addGlobalVarDeclStmt(ssize_t t, const std::string &name)
     {
         ts = "float";
     }
-    _as("@" + name + " = global " + ts + " 0, align 4");
+    _as("@" + name + " = global " + ts + " 0");
 }
 
-void IRBuilder::build(std::ostream &os)
+void IRCtrl::IRBuilder::build(std::ostream &os)
 {
     for (auto &one: _stmts)
     {
@@ -35,7 +36,7 @@ void IRBuilder::build(std::ostream &os)
     }
 }
 
-std::string IRBuilder::build()
+std::string IRCtrl::IRBuilder::build()
 {
     std::stringstream ss;
     for (auto &one: _stmts)
@@ -46,39 +47,44 @@ std::string IRBuilder::build()
     return ss.str();
 }
 
-IRBuilder::IRBuilder(const std::string &filename)
+IRCtrl::IRBuilder::IRBuilder(const std::string &filename)
 {
     _filename = filename;
     _as("source_filename = \"" + _filename + "\"");
 }
 
-void IRBuilder::_as(const std::string &s)
+void IRCtrl::IRBuilder::_as(const std::string &s)
 {
     _stmts.emplace_back(s);
 }
 
-bool IRBuilder::isInGlobalScope() const
+bool IRCtrl::IRBuilder::isInGlobalScope() const
 {
     return _inGlobalScope;
 }
 
-void IRBuilder::setInGlobalScope(bool x)
+void IRCtrl::IRBuilder::setInGlobalScope(bool x)
 {
     _inGlobalScope = x;
 }
 
-void IRBuilder::addConstVarDeclStmt(ssize_t t, const std::string &name)
+void IRCtrl::IRBuilder::addConstVarDeclStmt(ssize_t t, const std::string &name)
 {
 
 }
 
-int IRBuilder::getNewLabel()
+int IRCtrl::IRBuilder::getNewLabel()
 {
     _label += 1;
     return _label;
 }
 
-int IRBuilder::getLastLabel()
+int IRCtrl::IRBuilder::getLastLabel() const
 {
     return _label;
+}
+
+bool IRCtrl::IRBuilder::isInGlobal()
+{
+    return _lc.isInGlobal();
 }

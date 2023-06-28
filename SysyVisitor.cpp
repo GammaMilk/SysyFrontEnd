@@ -1,21 +1,25 @@
 
+
 #include "SysyVisitor.h"
 #include "IRBuilder.h"
+#include "IRLogger.h"
 
-std::shared_ptr<IRBuilder> builder;
+std::shared_ptr<IRCtrl::IRBuilder> builder;
 
 /// compUnit: compUnitItem* EOF;
 /// \param context
 /// \return
 std::any Visitor::visitCompUnit(SysyParser::CompUnitContext *context)
 {
-    builder = make_shared<IRBuilder>(IRBuilder());
+    LOGD("Enter CompUnit");
+    builder = std::make_shared<IRCtrl::IRBuilder>(IRCtrl::IRBuilder());
 
     for (auto &x: context->compUnitItem())
     {
         x->accept(this);
     }
 
+    LOGD("Exit CompUnit");
     return 0;
 }
 
@@ -47,13 +51,11 @@ std::any Visitor::visitDecl(SysyParser::DeclContext *context)
     {
         context->varDecl()->accept(this);
     }
-
     return 0;
 }
 
 std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext *context)
 {
-
     return 0;
 }
 
@@ -74,6 +76,21 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext *context)
 
 std::any Visitor::visitVarDecl(SysyParser::VarDeclContext *context)
 {
+    decltype(SysyParser::Float) bt;
+    if (dynamic_cast<SysyParser::FloatContext *>(context->bType()))
+    {
+        bt = SysyParser::Float;
+    } else
+    {
+        bt = SysyParser::Int;
+    }
+    if (bt == SysyParser::Float)
+    {
+        LOGD("Enter VarDecl Float");
+    } else
+    {
+        LOGD("Enter VarDecl Int");
+    }
     return 0;
 }
 

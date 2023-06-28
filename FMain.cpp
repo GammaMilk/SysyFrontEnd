@@ -20,6 +20,7 @@
 #include "antlr4-runtime.h"
 #include "tree/AbstractParseTreeVisitor.h"
 #include "tree/ParseTree.h"
+#include "IRLogger.h"
 
 using namespace antlrcpp;
 using namespace antlr4;
@@ -31,13 +32,6 @@ using tree::TerminalNode;
 constexpr bool is_debug = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
-constexpr std::ostream &debug()
-{
-    if (is_debug)
-        return std::cout;
-    else
-        return null_stream;
-}
 
 int main(int, const char **)
 {
@@ -50,6 +44,7 @@ int main(int, const char **)
         cout << "no such file" << endl;
         return 0;
     }
+    LOGD("File Fine.");
     ANTLRInputStream input(file);
     SysyLexer lexer(&input);
     CommonTokenStream tokens(&lexer);

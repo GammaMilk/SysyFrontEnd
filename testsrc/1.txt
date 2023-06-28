@@ -5,6 +5,19 @@
                     (bType int) 
                     (varDef a) ;))) 
         (compUnitItem 
+            (decl 
+                (varDecl 
+                    (bType float) 
+                    (varDef bb = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 2.3))))))))) ;))) 
+        (compUnitItem 
             (funcDef 
                 (funcType 
                     (bType int)) func ( 

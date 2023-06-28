@@ -7,43 +7,72 @@
 
 #include <string>
 
-enum class IROP
+namespace IRCtrl
 {
-    // INT
-    ADD = 100, SUB, MUL, SDIV, SREM, UDIV, UREM,
-    // FLOAT
-    FADD, FSUB, FMUL, FDIV, FNEG,
-    // LOGICAL
-    SHL, LSHR, ASHR, AND, OR, XOR,
-    // MEM
-    ALLOCA, LOAD, STORE, GETELEMENTPTR,
-    // CONTROL
-    RET, BR, CALL,
-    // CONVERT INT <-> FLOAT AND EXPAND
-    ZEXT, SITOFP, FPTOSI, BITCAST,
-    // COMPARE
-    ICMP, FCMP,
+    enum class IROP
+    {
+        // INT
+        ADD = 100, SUB, MUL, SDIV, SREM, UDIV, UREM,
+        // FLOAT
+        FADD, FSUB, FMUL, FDIV, FNEG,
+        // LOGICAL
+        SHL, LSHR, ASHR, AND, OR, XOR,
+        // MEM
+        ALLOCA, LOAD, STORE, GETELEMENTPTR,
+        // CONTROL
+        RET, BR, CALL,
+        // CONVERT INT <-> FLOAT AND EXPAND
+        ZEXT, SITOFP, FPTOSI, BITCAST,
+        // COMPARE
+        ICMP, FCMP,
 
-    // MISC
-    PHI = 200
-};
+        // MISC
+        PHI = 200
+    };
 
-class IRSen
-{
-public:
-    IRSen() { auto a = IROP::AlgoOP::d; }
+    class IRSen
+    {
+    public:
+        IRSen();
 
-    virtual std::string toString() = 0;
+        std::string name;
 
-private:
+        virtual std::string toString() = 0;
 
-};
+    protected:
+        IROP _op;
+    };
 
-class IntAlgoSen : IRSen
-{
-public:
-    virtual std::string toString() override;
-};
+    class IntAlgoSen : public IRSen
+    {
+    public:
+        virtual std::string toString() override;
+    };
+
+    class LogiSen : public IRSen
+    {
+    public:
+        virtual std::string toString() override;
+    };
+
+    class FunctionSen : public IRSen
+    {
+    public:
+        virtual std::string toString() override;
+    };
+
+    class VarSen : public IRSen
+    {
+    public:
+        virtual std::string toString() override;
+    };
+
+    class ConstSen : public IRSen
+    {
+    public:
+        virtual std::string toString() override;
+    };
+}
 
 //能不能在遍历语法树的同时写出三地址代码？能吗？
 //比如在int a = (5*b)+c/2;
