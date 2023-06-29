@@ -21,6 +21,7 @@
 #include "tree/AbstractParseTreeVisitor.h"
 #include "tree/ParseTree.h"
 #include "IRLogger.h"
+#include "IRBuilder.h"
 
 using namespace antlrcpp;
 using namespace antlr4;
@@ -33,12 +34,16 @@ constexpr bool is_debug = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
 
+extern std::shared_ptr<IRCtrl::IRBuilder> g_builder;
 int main(int, const char **)
 {
     std::ifstream file;
     std::ofstream outfile;
+
+    auto sourceFileName = "../testsrc/1.c";
+
     outfile.open("../testsrc/1.txt", std::ios::out);
-    file.open("../testsrc/1.c", std::ios::in);
+    file.open(sourceFileName, std::ios::in);
     if (!file)
     {
         cout << "no such file" << endl;
@@ -52,7 +57,7 @@ int main(int, const char **)
     tokens.fill();
     for (auto token: tokens.getTokens())
     {
-        // cout << token->toString() << endl;
+//        LOGD(token->toString());
     }
 
     SysyParser parser(&tokens);
@@ -68,6 +73,11 @@ int main(int, const char **)
     cout << endl;
 
     outfile << tree->toStringTree(&parser, true) << endl;
+
+    g_builder->setFilename(sourceFileName);
+    g_builder->build(outfile);
+
+
     outfile.close();
     return 0;
 }
