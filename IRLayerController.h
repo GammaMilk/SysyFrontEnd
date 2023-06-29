@@ -7,7 +7,7 @@
 
 #include "IRLayer.h"
 
-#define CHECK_LAYER_EMPTY if (this->_layers.empty()) throw std::runtime_error("Divide by zero exception")
+#define CHECK_LAYER_EMPTY if (this->_layers.empty()) throw std::runtime_error("Layer Empty")
 namespace IRCtrl
 {
     class IRLayerController

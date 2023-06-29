@@ -14,31 +14,16 @@ IRCtrl::IRBuilder::IRBuilder()
     _as("");
 }
 
-void IRCtrl::IRBuilder::addGlobalVarDeclStmt(ssize_t t, const std::string &name)
-{
-    std::string ts;
-    if (t == SysyParser::Int)
-    {
-        ts = "i32";
-    } else if (t == SysyParser::Float)
-    {
-        ts = "float";
-    }
-    _as("@" + name + " = global " + ts + " 0");
-}
 
 void IRCtrl::IRBuilder::build(std::ostream &os)
 {
-    for (auto &one: _stmts)
-    {
-        os << one;
-        os << '\n';
-    }
+    os << build();
 }
 
 std::string IRCtrl::IRBuilder::build()
 {
     std::stringstream ss;
+    ss << "; Filename = " << this->_filename;
     for (auto &one: _stmts)
     {
         ss << one;
@@ -68,10 +53,6 @@ void IRCtrl::IRBuilder::setInGlobalScope(bool x)
     _inGlobalScope = x;
 }
 
-void IRCtrl::IRBuilder::addConstVarDeclStmt(ssize_t t, const std::string &name)
-{
-
-}
 
 int IRCtrl::IRBuilder::getNewLabel()
 {
@@ -87,4 +68,15 @@ int IRCtrl::IRBuilder::getLastLabel() const
 bool IRCtrl::IRBuilder::isInGlobal()
 {
     return _lc.isInGlobal();
+}
+
+void IRCtrl::IRBuilder::setFilename(const std::string &filename)
+{
+    this->_filename = filename;
+}
+
+IRCtrl::VarSen IRCtrl::IRBuilder::addSingleValDeclare(const IRCtrl::IRVal &initVal, bool isConst)
+{
+    std::stringstream ss;
+
 }

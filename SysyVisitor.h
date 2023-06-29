@@ -284,4 +284,5 @@ public:
     std::any visitOr(SysyParser::OrContext *context) override;
 
     std::any visitLOrExp_(SysyParser::LOrExp_Context *context) override;
+
 };

@@ -9,7 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-
+using std::unordered_map;
 namespace IRCtrl
 {
     struct IRLayer
@@ -18,7 +18,7 @@ namespace IRCtrl
 //        std::vector<std::shared_ptr<VarSen>> vars;
 //        std::vector<std::shared_ptr<ConstSen>> constants;
         // using unordered_map instead of vector
-        std::unordered_map<std::string, std::shared_ptr<IRSen>> symbols;
+        unordered_map <std::string, std::shared_ptr<IRSen>> symbols;
     };
 }
 

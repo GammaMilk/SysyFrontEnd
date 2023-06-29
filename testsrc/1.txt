@@ -1,9 +1,131 @@
 (compUnit 
         (compUnitItem 
             (decl 
-                (varDecl 
+                (constDecl const 
                     (bType int) 
-                    (varDef a) ;))) 
+                    (constDef a = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 3))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType int) 
+                    (constDef aa = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 0x48))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType int) 
+                    (constDef aaa = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 03333))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType float) 
+                    (constDef b1 = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 2.3))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType float) 
+                    (constDef RADIUS = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 5.5))))))))) , 
+                    (constDef PI = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 03.141592653589793))))))))) , 
+                    (constDef EPS = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 1e-6))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType float) 
+                    (constDef PI_HEX = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 0x1.921fb6p+1))))))))) , 
+                    (constDef HEX2 = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 0x.AP-3))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType float) 
+                    (constDef CONV1 = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 233))))))))) , 
+                    (constDef CONV2 = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 0xfff))))))))) ;))) 
         (compUnitItem 
             (decl 
                 (varDecl 
@@ -16,7 +138,120 @@
                                         (unaryExp 
                                             (primaryExp 
                                                 (number 
-                                                    (floatConst 2.3))))))))) ;))) 
+                                                    (floatConst 2.3))))))))) , 
+                    (varDef cc = 
+                        (initVal 
+                            (exp 
+                                (addExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (floatConst 3.3))))))))) ;))) 
+        (compUnitItem 
+            (decl 
+                (constDecl const 
+                    (bType int) 
+                    (constDef c [ 
+                        (exp 
+                            (addExp 
+                                (mulExp 
+                                    (unaryExp 
+                                        (primaryExp 
+                                            (number 
+                                                (intConst 2))))))) ] [ 
+                        (exp 
+                            (addExp 
+                                (mulExp 
+                                    (unaryExp 
+                                        (primaryExp 
+                                            (number 
+                                                (intConst 3))))))) ] = 
+                        (initVal { 
+                            (initVal { 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 1)))))))) , 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 2)))))))) , 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 3)))))))) }) , 
+                            (initVal { 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 4)))))))) , 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 5)))))))) , 
+                                (initVal 
+                                    (exp 
+                                        (addExp 
+                                            (mulExp 
+                                                (unaryExp 
+                                                    (primaryExp 
+                                                        (number 
+                                                            (intConst 6)))))))) }) })) ;))) 
+        (compUnitItem 
+            (decl 
+                (varDecl 
+                    (bType float) 
+                    (varDef d [ 
+                        (exp 
+                            (addExp 
+                                (mulExp 
+                                    (mulExp 
+                                        (unaryExp 
+                                            (primaryExp 
+                                                (number 
+                                                    (intConst 1))))) * 
+                                    (unaryExp 
+                                        (primaryExp 
+                                            (number 
+                                                (intConst 2))))))) ] = 
+                        (initVal { 
+                            (initVal 
+                                (exp 
+                                    (addExp 
+                                        (mulExp 
+                                            (unaryExp 
+                                                (primaryExp 
+                                                    (number 
+                                                        (floatConst 1.1)))))))) , 
+                            (initVal 
+                                (exp 
+                                    (addExp 
+                                        (mulExp 
+                                            (unaryExp 
+                                                (primaryExp 
+                                                    (number 
+                                                        (floatConst 2.2)))))))) })) ;))) 
         (compUnitItem 
             (funcDef 
                 (funcType 
@@ -60,16 +295,6 @@
                                 (varDef b) ;))) 
                     (blockItem 
                         (stmt 
-                            (lVal a) = 
-                            (exp 
-                                (addExp 
-                                    (mulExp 
-                                        (unaryExp 
-                                            (primaryExp 
-                                                (number 
-                                                    (intConst 10))))))) ;)) 
-                    (blockItem 
-                        (stmt 
                             (lVal b) = 
                             (exp 
                                 (addExp 
@@ -91,3 +316,4 @@
                                         (unaryExp 
                                             (primaryExp 
                                                 (lVal b)))))) ;)) }))) <EOF>)
+; Filename = ../testsrc/1.c

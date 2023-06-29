@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include "IRLayerController.h"
+#include "SysyParser.h"
+#include "IRVal.h"
 
 
 namespace IRCtrl
@@ -21,15 +23,16 @@ namespace IRCtrl
 
         explicit IRBuilder(const std::string &filename);
 
-        void addGlobalVarDeclStmt(ssize_t t, const std::string &name);
+        void setFilename(const std::string &filename);
 
-        void addConstVarDeclStmt(ssize_t t, const std::string &name);
+        VarSen addSingleValDeclare(const IRVal &initVal, bool isConst);
+
 
         void build(std::ostream &os);
 
         int getNewLabel();
 
-        int getLastLabel() const;
+        [[nodiscard]] int getLastLabel() const;
 
         std::string build();
 
