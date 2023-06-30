@@ -16,44 +16,44 @@
 
 namespace IRCtrl
 {
-    class IRBuilder
-    {
-    public:
-        IRBuilder();
+class IRBuilder
+{
+public:
+    IRBuilder();
 
-        explicit IRBuilder(const std::string &filename);
+    explicit IRBuilder(const std::string& filename);
 
-        void setFilename(const std::string &filename);
+    void setFilename(const std::string& filename);
 
-        VarSen addSingleValDeclare(const IRVal &initVal, bool isConst);
-
-
-        void build(std::ostream &os);
-
-        int getNewLabel();
-
-        [[nodiscard]] int getLastLabel() const;
-
-        std::string build();
-
-        bool isInGlobal();
-
-    private:
-        std::vector<std::string> _stmts;
-        std::string _filename;
-        bool _inGlobalScope = true;
-        int _label = 100;
-        IRCtrl::IRLayerController _lc;
-    public:
-        [[nodiscard]] bool isInGlobalScope() const;
-
-        void setInGlobalScope(bool x);
-
-    private:
-
-        void _as(const std::string &s);
-    };
-}
+    VarSen addSingleValDeclare(const IRVal& initVal, bool isConst);
 
 
-#endif //SYSYLEX_IRBUILDER_H
+    void build(std::ostream& os);
+
+    int getNewLabel();
+
+    [[nodiscard]] int getLastLabel() const;
+
+    std::string build();
+
+    bool isInGlobal();
+
+private:
+    std::vector<std::string>  _stmts;
+    std::string               _filename;
+    bool                      _inGlobalScope = true;
+    int                       _label         = 100;
+    IRCtrl::IRLayerController _lc;
+
+public:
+    [[nodiscard]] bool isInGlobalScope() const;
+
+    void setInGlobalScope(bool x);
+
+private:
+    void _as(const std::string& s);
+};
+}   // namespace IRCtrl
+
+
+#endif   // SYSYLEX_IRBUILDER_H

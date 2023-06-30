@@ -6,4 +6,4 @@
 
 namespace IRCtrl
 {
-} // IRCtrl
+}   // namespace IRCtrl

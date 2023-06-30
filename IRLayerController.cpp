@@ -33,36 +33,30 @@ void IRCtrl::IRLayerController::exit()
 ///
 /// \param sen
 /// \return
-IRCtrl::IRSen &IRCtrl::IRLayerController::query(const std::shared_ptr<IRSen> &sen, bool recursively)
+IRCtrl::IRSen& IRCtrl::IRLayerController::query(const std::shared_ptr<IRSen>& sen, bool recursively)
 {
     CHECK_LAYER_EMPTY;
     auto ss = this->_layers.back();
 
     // Check if sen in the xs
     auto sr = ss.symbols.find(sen->name);
-    if (sr == ss.symbols.end())
-    {
-        LOGD("ERROR, Unexpected end");
-    }
+    if (sr == ss.symbols.end()) { LOGD("ERROR, Unexpected end"); }
     return *sr->second;
 }
 
 ///
 /// \param symbol_name
 /// \return
-IRCtrl::IRSen &IRCtrl::IRLayerController::query(const std::string &symbol_name, bool recursively)
+IRCtrl::IRSen& IRCtrl::IRLayerController::query(const std::string& symbol_name, bool recursively)
 {
     CHECK_LAYER_EMPTY;
     auto ss = this->_layers.back();
     auto sr = ss.symbols.find(symbol_name);
-    if (sr == ss.symbols.end())
-    {
-        LOGD("ERROR, Unexpected end");
-    }
+    if (sr == ss.symbols.end()) { LOGD("ERROR, Unexpected end"); }
     return *sr->second;
 }
 
-void IRCtrl::IRLayerController::push(const std::shared_ptr<IRSen> &sen)
+void IRCtrl::IRLayerController::push(const std::shared_ptr<IRSen>& sen)
 {
     CHECK_LAYER_EMPTY;
     this->_layers.back().symbols[sen->name] = sen;

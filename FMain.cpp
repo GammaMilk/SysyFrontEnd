@@ -30,12 +30,13 @@ using std::endl;
 using tree::ErrorNode;
 using tree::ParseTree;
 using tree::TerminalNode;
-constexpr bool is_debug = true;
+constexpr bool      is_debug    = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
 
 extern std::shared_ptr<IRCtrl::IRBuilder> g_builder;
-int main(int, const char **)
+
+int main(int, const char**)
 {
     std::ifstream file;
     std::ofstream outfile;
@@ -44,24 +45,22 @@ int main(int, const char **)
 
     outfile.open("../testsrc/1.txt", std::ios::out);
     file.open(sourceFileName, std::ios::in);
-    if (!file)
-    {
+    if (!file) {
         cout << "no such file" << endl;
         return 0;
     }
     LOGD("File Fine.");
-    ANTLRInputStream input(file);
-    SysyLexer lexer(&input);
+    ANTLRInputStream  input(file);
+    SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 
     tokens.fill();
-    for (auto token: tokens.getTokens())
-    {
-//        LOGD(token->toString());
+    for (auto token : tokens.getTokens()) {
+        //        LOGD(token->toString());
     }
 
-    SysyParser parser(&tokens);
-    SysyParser::CompUnitContext *tree = parser.compUnit();
+    SysyParser                   parser(&tokens);
+    SysyParser::CompUnitContext* tree = parser.compUnit();
 
     // cout<<parser.blockItem()->toStringTree(true)<<endl;
 

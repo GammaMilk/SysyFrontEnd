@@ -11,12 +11,15 @@
 namespace IRCtrl
 {
 
-    class NotImplementedException : public std::logic_error
+class NotImplementedException : public std::logic_error
+{
+public:
+    NotImplementedException()
+        : std::logic_error("Function not yet implemented.")
     {
-    public:
-        NotImplementedException() : std::logic_error("Function not yet implemented.") {}
-    };
+    }
+};
 
-} // IRCtrl
+}   // namespace IRCtrl
 
-#endif //SYSYLEX_IREXCEPTIONS_H
+#endif   // SYSYLEX_IREXCEPTIONS_H

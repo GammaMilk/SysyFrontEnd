@@ -9,18 +9,18 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+
 using std::unordered_map;
 namespace IRCtrl
 {
-    struct IRLayer
-    {
-//        std::vector<std::shared_ptr<FunctionSen>> functions;
-//        std::vector<std::shared_ptr<VarSen>> vars;
-//        std::vector<std::shared_ptr<ConstSen>> constants;
-        // using unordered_map instead of vector
-        unordered_map <std::string, std::shared_ptr<IRSen>> symbols;
-    };
-}
+struct IRLayer {
+    //        std::vector<std::shared_ptr<FunctionSen>> functions;
+    //        std::vector<std::shared_ptr<VarSen>> vars;
+    //        std::vector<std::shared_ptr<ConstSen>> constants;
+    // using unordered_map instead of vector
+    unordered_map<std::string, std::shared_ptr<IRSen>> symbols;
+};
+}   // namespace IRCtrl
 
 
-#endif //SYSYLEX_IRLAYER_H
+#endif   // SYSYLEX_IRLAYER_H

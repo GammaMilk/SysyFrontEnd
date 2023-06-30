@@ -10,13 +10,13 @@
 
 namespace IRCtrl
 {
-    class Utils
-    {
-    public:
-        static int parseInteger(const std::string &str);
+class Utils
+{
+public:
+    static int parseInteger(const std::string& str);
 
-        static int tryParseInteger(const std::string &str);
-    }; // IRCtrl
-} // Utils
+    static int tryParseInteger(const std::string& str);
+};   // IRCtrl
+}   // namespace IRCtrl
 
-#endif //SYSYLEX_IRUTILS_H
+#endif   // SYSYLEX_IRUTILS_H

@@ -12,81 +12,127 @@
 namespace IRCtrl
 {
 
-    class IRVal
+class IRVal
+{
+public:
+    std::string name;
+    IRValType   type;
+
+    IRVal()
+        : name(std::string(""))
+        , type(IRValType::Unknown)
     {
-    public:
-        std::string name;
-        IRValType type;
+    }
 
-        IRVal() : name(std::string("")), type(IRValType::Unknown) {}
+    IRVal(const std::string& name1, IRValType type1)
+        : name(std::string(name1))
+        , type(type1)
+    {
+    }
 
-        IRVal(const std::string &name1, IRValType type1) : name(std::string(name1)), type(type1) {}
+    explicit IRVal(const std::string& name1)
+        : name(std::string(name1))
+        , type(IRValType::Unknown)
+    {
+    }
+};
 
-        explicit IRVal(const std::string &name1) : name(std::string(name1)), type(IRValType::Unknown) {}
+class NumberVal : public IRVal
+{
+public:
+    bool isGlobal;
+    bool isConst;
+
+    virtual void unary() {}
+
+    explicit NumberVal(const std::string& name1)
+        : isConst(false)
+        , isGlobal(false)
+        , IRVal(name1)
+    {
+    }
+
+    NumberVal(bool is_global, bool is_const)
+        : isGlobal(is_global)
+        , isConst(is_const)
+    {
+    }
+};
+
+class IntOrFloatCVal : public NumberVal
+{
+public:
+    union {
+        float fval;
+        int   ival{};
     };
 
-    class NumberVal : public IRVal
+    explicit IntOrFloatCVal(const std::string& name1)
+        : NumberVal(name1)
     {
-    public:
-        bool isGlobal;
-        bool isConst;
+    }
 
-        virtual void unary() {}
-
-        explicit NumberVal(const std::string &name1) : isConst(false), isGlobal(false), IRVal(name1) {}
-
-        NumberVal(bool is_global, bool is_const) : isGlobal(is_global), isConst(is_const) {}
-    };
-
-    class IntOrFloatCVal : public NumberVal
+    IntOrFloatCVal(const std::string& name1, float v)
+        : NumberVal(name1)
+        , fval(v)
     {
-    public:
-        union
-        {
-            float fval;
-            int ival{};
-        };
+    }
 
-        explicit IntOrFloatCVal(const std::string &name1) : NumberVal(name1) {}
-
-        IntOrFloatCVal(const std::string &name1, float v) : NumberVal(name1), fval(v) {}
-
-        IntOrFloatCVal(const std::string &name1, int v) : NumberVal(name1), ival(v) {}
-    };
-
-    class IntVal : public IntOrFloatCVal
+    IntOrFloatCVal(const std::string& name1, int v)
+        : NumberVal(name1)
+        , ival(v)
     {
-    public:
-        explicit IntVal(const std::string &name1) : IntOrFloatCVal(name1, 0) {}
+    }
+};
 
-        IntVal(const std::string &name1, int val) : IntOrFloatCVal(name1, val) {}
-
-        void unary() override;
-    };
-
-    class FloatVal : public IntOrFloatCVal
+class IntVal : public IntOrFloatCVal
+{
+public:
+    explicit IntVal(const std::string& name1)
+        : IntOrFloatCVal(name1, 0)
     {
-    public:
-        explicit FloatVal(const std::string &name1) : IntOrFloatCVal(name1, 0.0f) {}
+    }
 
-        FloatVal(const std::string &name1, float val) : IntOrFloatCVal(name1, val) {}
-
-        void unary() override;
-    };
-
-    class IntArrayVal : public NumberVal
+    IntVal(const std::string& name1, int val)
+        : IntOrFloatCVal(name1, val)
     {
-    public:
-        std::vector<int> val;
-        std::vector<int> shape;
+    }
 
-        explicit IntArrayVal(const std::string &name1) : NumberVal(name1) {}
-    };
+    void unary() override;
+};
 
-    class FloatArrayVal : public NumberVal
+class FloatVal : public IntOrFloatCVal
+{
+public:
+    explicit FloatVal(const std::string& name1)
+        : IntOrFloatCVal(name1, 0.0f)
     {
-    };
-}
+    }
+
+    FloatVal(const std::string& name1, float val)
+        : IntOrFloatCVal(name1, val)
+    {
+    }
+
+    void unary() override;
+};
+
+class IntArrayVal : public NumberVal
+{
+public:
+    std::vector<int> val;
+    std::vector<int> shape;
+
+    explicit IntArrayVal(const std::string& name1)
+        : NumberVal(name1)
+    {
+    }
+};
+
+class FloatArrayVal : public NumberVal
+{
+};
+}   // namespace IRCtrl
 
 
-#endif //SYSYLEX_IRVAL_H
+#endif   // SYSYLEX_IRVAL_H

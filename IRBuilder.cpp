@@ -15,7 +15,7 @@ IRCtrl::IRBuilder::IRBuilder()
 }
 
 
-void IRCtrl::IRBuilder::build(std::ostream &os)
+void IRCtrl::IRBuilder::build(std::ostream& os)
 {
     os << build();
 }
@@ -24,21 +24,20 @@ std::string IRCtrl::IRBuilder::build()
 {
     std::stringstream ss;
     ss << "; Filename = " << this->_filename;
-    for (auto &one: _stmts)
-    {
+    for (auto& one : _stmts) {
         ss << one;
         ss << '\n';
     }
     return ss.str();
 }
 
-IRCtrl::IRBuilder::IRBuilder(const std::string &filename)
+IRCtrl::IRBuilder::IRBuilder(const std::string& filename)
 {
     _filename = filename;
     _as("source_filename = \"" + _filename + "\"");
 }
 
-void IRCtrl::IRBuilder::_as(const std::string &s)
+void IRCtrl::IRBuilder::_as(const std::string& s)
 {
     _stmts.emplace_back(s);
 }
@@ -70,13 +69,12 @@ bool IRCtrl::IRBuilder::isInGlobal()
     return _lc.isInGlobal();
 }
 
-void IRCtrl::IRBuilder::setFilename(const std::string &filename)
+void IRCtrl::IRBuilder::setFilename(const std::string& filename)
 {
     this->_filename = filename;
 }
 
-IRCtrl::VarSen IRCtrl::IRBuilder::addSingleValDeclare(const IRCtrl::IRVal &initVal, bool isConst)
+IRCtrl::VarSen IRCtrl::IRBuilder::addSingleValDeclare(const IRCtrl::IRVal& initVal, bool isConst)
 {
     std::stringstream ss;
-
 }

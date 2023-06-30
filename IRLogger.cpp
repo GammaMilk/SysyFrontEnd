@@ -5,7 +5,7 @@
 
 std::ofstream g_debug_out;
 
-std::ostream &sysy_debug()
+std::ostream& sysy_debug()
 {
 #ifdef _DEBUG
     return std::cerr;

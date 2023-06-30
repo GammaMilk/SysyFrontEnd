@@ -4,8 +4,7 @@
 
 #include "IRSen.h"
 
-IRCtrl::IRSen::IRSen()
-= default;
+IRCtrl::IRSen::IRSen() = default;
 
 std::string IRCtrl::IRSen::toString()
 {

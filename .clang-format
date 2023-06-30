@@ -13,10 +13,16 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: BlockIndent
 
 # 连续赋值时，对齐所有等号
-AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  PadOperators: false
 
 # 连续声明时，对齐所有声明的变量名
-AlignConsecutiveDeclarations: AcrossEmptyLines
+AlignConsecutiveDeclarations:
+  Enabled: true
 
 # 对齐连续位域字段的风格
 # AlignConsecutiveBitFields: AcrossEmptyLinesAndComments

@@ -7,13 +7,13 @@
 namespace IRCtrl
 {
 
-    void IntVal::unary()
-    {
-        this->ival = -this->ival;
-    }
-
-    void FloatVal::unary()
-    {
-        this->fval = -this->fval;
-    }
+void IntVal::unary()
+{
+    this->ival = -this->ival;
 }
+
+void FloatVal::unary()
+{
+    this->fval = -this->fval;
+}
+}   // namespace IRCtrl

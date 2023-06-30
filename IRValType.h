@@ -8,15 +8,14 @@
 namespace IRCtrl
 {
 
-    enum class IRValType
-    {
-        Func,
-        Int,
-        Float,
+enum class IRValType {
+    Func,
+    Int,
+    Float,
 
-        Unknown,
-    };
+    Unknown,
+};
 
-} // IRCtrl
+}   // namespace IRCtrl
 
-#endif //SYSYLEX_IRVALTYPE_H
+#endif   // SYSYLEX_IRVALTYPE_H
