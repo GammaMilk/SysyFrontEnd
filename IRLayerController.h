@@ -28,11 +28,11 @@ public:
      * Push a sentence into the symbol table.
      * @param sen
      */
-    void push(const std::shared_ptr<IRSen>& sen);
+    void push(const std::shared_ptr<IRVal>& sen);
 
-    IRCtrl::IRSen& query(const std::shared_ptr<IRSen>& sen, bool recursively = true);
+    std::shared_ptr<IRVal> query(const std::shared_ptr<IRVal>& val, bool recursively = true);
 
-    IRCtrl::IRSen& query(const std::string& symbol_name, bool recursively = true);
+    std::shared_ptr<IRVal> query(const std::string& symbol_name, bool recursively = true);
 
 private:
     std::vector<IRLayer> _layers;

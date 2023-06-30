@@ -12,6 +12,7 @@
 #include "IRLayerController.h"
 #include "SysyParser.h"
 #include "IRVal.h"
+#include "IRProgram.h"
 
 
 namespace IRCtrl
@@ -22,28 +23,23 @@ public:
     IRBuilder();
 
     explicit IRBuilder(const std::string& filename);
-
     void setFilename(const std::string& filename);
-
-    VarSen addSingleValDeclare(const IRVal& initVal, bool isConst);
-
-
     void build(std::ostream& os);
 
     int getNewLabel();
-
     [[nodiscard]] int getLastLabel() const;
 
     std::string build();
+    std::unique_ptr<IRProgram> program;
 
-    bool isInGlobal();
 
 private:
+    // Here stmts only means other stmt(other than function, var, const)
     std::vector<std::string>  _stmts;
     std::string               _filename;
     bool                      _inGlobalScope = true;
     int                       _label         = 100;
-    IRCtrl::IRLayerController _lc;
+
 
 public:
     [[nodiscard]] bool isInGlobalScope() const;

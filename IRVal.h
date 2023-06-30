@@ -6,13 +6,14 @@
 #define SYSYLEX_IRVAL_H
 
 #include <string>
+#include <utility>
 #include <vector>
-#include "IRValType.h"
+#include "IRTypes.h"
 
 namespace IRCtrl
 {
 
-class IRVal
+class IRVal : public IPrintable
 {
 public:
     std::string name;
@@ -59,7 +60,14 @@ public:
     }
 };
 
-class IntOrFloatCVal : public NumberVal
+class VVal : public NumberVal
+{
+};
+
+/**
+ * Const Value, including const int and const float.
+ */
+class CVal : public NumberVal
 {
 public:
     union {
@@ -67,54 +75,103 @@ public:
         int   ival{};
     };
 
-    explicit IntOrFloatCVal(const std::string& name1)
+    explicit CVal(const std::string& name1)
         : NumberVal(name1)
     {
+        isConst = true;
     }
 
-    IntOrFloatCVal(const std::string& name1, float v)
-        : NumberVal(name1)
-        , fval(v)
+    CVal(const std::string& name1, float v)
+        : CVal(name1)
     {
+        fval = v;
     }
 
-    IntOrFloatCVal(const std::string& name1, int v)
-        : NumberVal(name1)
-        , ival(v)
+    CVal(const std::string& name1, int v)
+        : CVal(name1)
     {
+        ival = v;
     }
 };
 
-class IntVal : public IntOrFloatCVal
+class IntCVal : public CVal
 {
 public:
-    explicit IntVal(const std::string& name1)
-        : IntOrFloatCVal(name1, 0)
+    explicit IntCVal(const std::string& name1)
+        : CVal(name1, 0)
     {
+        type = IRValType::Int;
     }
 
-    IntVal(const std::string& name1, int val)
-        : IntOrFloatCVal(name1, val)
+    IntCVal(const std::string& name1, int val)
+        : CVal(name1, val)
     {
+        type = IRValType::Int;
     }
 
-    void unary() override;
+    void   unary() override;
+    string toString() override;
 };
 
-class FloatVal : public IntOrFloatCVal
+class FloatCVal : public CVal
 {
 public:
-    explicit FloatVal(const std::string& name1)
-        : IntOrFloatCVal(name1, 0.0f)
+    explicit FloatCVal(const std::string& name1)
+        : CVal(name1, 0.0f)
     {
+        type = IRValType::Float;
     }
 
-    FloatVal(const std::string& name1, float val)
-        : IntOrFloatCVal(name1, val)
+    FloatCVal(const std::string& name1, float val)
+        : CVal(name1, val)
     {
+        type = IRValType::Float;
     }
 
-    void unary() override;
+    void   unary() override;
+    string toString() override;
+};
+
+class CArr : public NumberVal
+{
+public:
+    explicit CArr(const string& name1)
+        : NumberVal(name1)
+    {
+        isConst = true;
+    }
+
+    void setShape(vector<int> shape);
+
+protected:
+    vector<int> _shape;
+};
+
+class IntCArr : public CArr
+{
+public:
+    vector<int> initArr;
+    IntCArr(const string& name1, vector<int> shape)
+        : CArr(name1)
+    {
+        setShape(std::move(shape));
+        int size = 1;
+        for (int& x : _shape) { size *= x; }
+        initArr.resize(size);
+    }
+};
+class FloatCArr : public CArr
+{
+public:
+    vector<float> initArr;
+    FloatCArr(const string& name1, vector<int> shape)
+        : CArr(name1)
+    {
+        setShape(std::move(shape));
+        int size = 1;
+        for (int& x : _shape) { size *= x; }
+        initArr.resize(size);
+    }
 };
 
 class IntArrayVal : public NumberVal
@@ -126,13 +183,29 @@ public:
     explicit IntArrayVal(const std::string& name1)
         : NumberVal(name1)
     {
+        type = IRValType::IntArr;
     }
 };
 
 class FloatArrayVal : public NumberVal
 {
+public:
+    std::vector<float> val;
+    std::vector<int>   shape;
+
+    explicit FloatArrayVal(const std::string& name1)
+        : NumberVal(name1)
+    {
+        type = IRValType::FloatArr;
+    }
 };
+
+class Function : public IRVal
+{
+};
+
+
+
+
 }   // namespace IRCtrl
-
-
 #endif   // SYSYLEX_IRVAL_H

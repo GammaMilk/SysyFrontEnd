@@ -10,8 +10,7 @@
 
 IRCtrl::IRBuilder::IRBuilder()
 {
-    FunctionSen sen;
-    _as("");
+    program = make_unique<IRProgram>();
 }
 
 
@@ -23,15 +22,24 @@ void IRCtrl::IRBuilder::build(std::ostream& os)
 std::string IRCtrl::IRBuilder::build()
 {
     std::stringstream ss;
+
+    // Other Info about file
     ss << "; Filename = " << this->_filename;
     for (auto& one : _stmts) {
         ss << one;
         ss << '\n';
     }
+
+    // Main Code
+    for (auto& c : this->program->getGlobalConst()) {
+        GlobalValDeclSen declSen(c->name, c);
+        ss << declSen.toString() << "\n";
+    }
     return ss.str();
 }
 
 IRCtrl::IRBuilder::IRBuilder(const std::string& filename)
+    : IRBuilder()
 {
     _filename = filename;
     _as("source_filename = \"" + _filename + "\"");
@@ -64,17 +72,8 @@ int IRCtrl::IRBuilder::getLastLabel() const
     return _label;
 }
 
-bool IRCtrl::IRBuilder::isInGlobal()
-{
-    return _lc.isInGlobal();
-}
 
 void IRCtrl::IRBuilder::setFilename(const std::string& filename)
 {
     this->_filename = filename;
-}
-
-IRCtrl::VarSen IRCtrl::IRBuilder::addSingleValDeclare(const IRCtrl::IRVal& initVal, bool isConst)
-{
-    std::stringstream ss;
 }

@@ -60,10 +60,11 @@ std::any Visitor::visitDecl(SysyParser::DeclContext* context)
 
 std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext* context)
 {
+    // Set this layer to const.
     g_sw->isConst.push();
     g_sw->isConst.set(true);
     for (auto& x : context->constDef()) { x->accept(this); }
-    g_sw->isConst.pop();
+    g_sw->isConst.pop();   // resume
     return 0;
 }
 
@@ -96,7 +97,8 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
             type = IRCtrl::IRValType::Int;
             LOGD("Type: Int");
         }
-        LOGD("Name: " << context->Ident()->getText());
+        auto idName = string(context->Ident()->getText());
+        LOGD("Name: " << idName);
 
         auto initVal = context->initVal();
 
@@ -111,35 +113,41 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
             if (init_ == nullptr) throw std::runtime_error("Fuck!");
 
             auto number_any_val = init_->accept(this);   // Accept
-            auto number_val     = std::any_cast<std::shared_ptr<IntOrFloatCVal>>(number_any_val);
-
-            auto int_val   = std::dynamic_pointer_cast<IntVal>(number_val);
-            auto float_val = std::dynamic_pointer_cast<FloatVal>(number_val);
-            // TODO do convert between int and float constants.
+            auto number_val     = std::any_cast<std::shared_ptr<CVal>>(number_any_val);
+            auto int_val        = std::dynamic_pointer_cast<IntCVal>(number_val);
+            auto float_val      = std::dynamic_pointer_cast<FloatCVal>(number_val);
             if (type == IRCtrl::IRValType::Int) {
                 // Int
-                int num;
-                if (int_val != nullptr)
-                    num = int_val->ival;
-                else
-                    num = (int)float_val->fval;
+                int num = (int_val != nullptr) ? int_val->ival : (int)float_val->fval;
                 LOGD(num);
-                // TODO: Judge if in Global
-                // TODO: Insert into builder queue
+                // Judge if in Global
+                if (g_lc->isInGlobal()) {
+                    // global const int
+                    auto thisIntConstVal = std::make_shared<IntCVal>(idName, num);
+                    g_lc->push(thisIntConstVal);
+                    g_builder->program->addGlobalConst(thisIntConstVal);
+                } else {
+                    // TODO local const int
+                }
             } else {
                 // Float
                 float num;
-                if (float_val != nullptr)
-                    num = float_val->fval;
-                else
-                    num = (float)int_val->ival;
+                num = (float_val != nullptr) ? float_val->fval : (float)int_val->ival;
                 LOGD(num);
-                // TODO: insert
+                // const float in global?
+                if (g_lc->isInGlobal()) {
+                    // const float global
+                    auto thisFloatConstVal = make_shared<FloatCVal>(idName, num);
+                    g_lc->push(thisFloatConstVal);
+                    g_builder->program->addGlobalConst(thisFloatConstVal);
+                } else {
+                    // TODO const float local
+                }
             }
 
         } else {
             // array val
-            // TODO
+            // TODO  ARRAY CONST GEN
             LOGD("Array");
             LOGD(initVal->getText());
         }
@@ -155,11 +163,12 @@ std::any Visitor::visitVarDecl(SysyParser::VarDeclContext* context)
 
 std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
 {
-    throw IRCtrl::NotImplementedException();
+    return 0;
 }
 
 std::any Visitor::visitInit(SysyParser::InitContext* context)
 {
+    // FINAL
     return context->exp()->accept(this);
 }
 
@@ -208,9 +217,11 @@ std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
 std::any Visitor::visitBlock(SysyParser::BlockContext* context)
 {
     LOGD("Enter Block");
+    g_lc->enter();
     // TODO visitBlock
 
     LOGD("Exit  Block");
+    g_lc->exit();
     return 0;
 }
 
@@ -270,21 +281,48 @@ std::any Visitor::visitCond(SysyParser::CondContext* context)
     return 0;
 }
 
+/// lVal: Ident (Lbracket exp Rbracket)*;
+/// \param context
+/// \return
 std::any Visitor::visitLVal(SysyParser::LValContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // Const, we need to actually calc the true value
+        string                   name  = context->Ident()->getText();
+        const shared_ptr<IRVal>& query = g_lc->query(name, false);
+        auto                     cval  = std::dynamic_pointer_cast<CVal>(query);
+        return cval;
+    } else {
+        // Non const, we need
+    }
     return 0;
 }
 
-// number
+/// primaryExp:
+//	Lparen exp Rparen	# primaryExp_####
+//	| lVal				# lValExpr
+//	| number			# primaryExp_####
+/// ATTENTION: THIS RULE HAS 2: exp and number!!!!!!!!
+/// \param context
+/// \return
 std::any Visitor::visitPrimaryExp_(SysyParser::PrimaryExp_Context* context)
 {
-    // FINAL
-    return context->number()->accept(this);
+    if (g_lc->isInGlobal()) {
+        if (context->exp()) {
+            return context->exp()->accept(this);
+        } else {
+            return context->number()->accept(this);
+        }
+    }
 }
-
+/// primaryExp:
+//	Lparen exp Rparen	# primaryExp_
+//	| lVal				# lValExpr
+/// \param context
+/// \return
 std::any Visitor::visitLValExpr(SysyParser::LValExprContext* context)
 {
-    return 0;
+    return context->lVal()->accept(this);
 }
 
 std::any Visitor::visitDecIntConst(SysyParser::DecIntConstContext* context)
@@ -319,37 +357,33 @@ std::any Visitor::visitHexFloatConst(SysyParser::HexFloatConstContext* context)
 
 /// A Const literal number
 /// \param context
-/// \return std::shared_ptr<IntOrFloatCVal>
+/// \return std::shared_ptr<CVal>
 std::any Visitor::visitNumber(SysyParser::NumberContext* context)
 {
     std::string num;
     if (context->intConst()) {
-        auto x = context->intConst()->accept(this);
-        num    = std::any_cast<std::string>(x);
-        int trueNum;
-        try {
-            trueNum = IRCtrl::Utils::parseInteger(num);
-        } catch (const std::invalid_argument& e) {
-            trueNum = (int)std::strtof(num.c_str(), nullptr);
-        }
-        std::shared_ptr<IntOrFloatCVal> n = std::make_shared<IntVal>("", trueNum);
-        n->isConst                        = g_sw->isConst.get();
-        n->isGlobal                       = g_builder->isInGlobal();
+        auto x                        = context->intConst()->accept(this);
+        num                           = std::any_cast<std::string>(x);
+        int                   trueNum = Utils::tryParseInteger(num);
+        std::shared_ptr<CVal> n       = std::make_shared<IntCVal>("", trueNum);
+        n->isConst                    = g_sw->isConst.get();
+        n->isGlobal                   = g_lc->isInGlobal();
         return n;
     } else {
         auto x = context->floatConst()->accept(this);
         num    = std::any_cast<std::string>(x);
         float trueNum;
         trueNum                           = std::strtof(num.c_str(), nullptr);
-        std::shared_ptr<IntOrFloatCVal> n = std::make_shared<FloatVal>("", trueNum);
+        std::shared_ptr<CVal> n           = std::make_shared<FloatCVal>("", trueNum);
         n->isConst                        = g_sw->isConst.get();
-        n->isGlobal                       = g_builder->isInGlobal();
+        n->isGlobal                       = g_lc->isInGlobal();
         return n;
     }
 }
 
 std::any Visitor::visitUnaryExp_(SysyParser::UnaryExp_Context* context)
 {
+    // FINAL
     return context->primaryExp()->accept(this);
 }
 
@@ -367,7 +401,7 @@ std::any Visitor::visitUnarySub(SysyParser::UnarySubContext* context)
 {
     // Const decl, we should pass the value as a true value
     if (g_sw->isConst.get()) {
-        auto n = std::any_cast<std::shared_ptr<IntOrFloatCVal>>(context->unaryExp()->accept(this));
+        auto n = std::any_cast<std::shared_ptr<CVal>>(context->unaryExp()->accept(this));
         n->unary();
         return (n);
     }
@@ -398,18 +432,57 @@ std::any Visitor::visitFuncRParams(SysyParser::FuncRParamsContext* context)
     return 0;
 }
 
+/// mulExp Div unaryExp	# div
+/// \param context
+/// \return
 std::any Visitor::visitDiv(SysyParser::DivContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // addExp と mulExp IntORFloatCVal returnする
+        auto lav = context->mulExp()->accept(this);
+        auto rav = context->unaryExp()->accept(this);
+        auto lv  = std::any_cast<std::shared_ptr<CVal>>(lav);
+        auto rv  = std::any_cast<std::shared_ptr<CVal>>(rav);
+
+        auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Div);
+        return res;
+    }
     return 0;
 }
 
+/// mulExp Mod unaryExp	# mod;
+/// \param context
+/// \return
 std::any Visitor::visitMod(SysyParser::ModContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // addExp と mulExp IntORFloatCVal returnする
+        auto lav = context->mulExp()->accept(this);
+        auto rav = context->unaryExp()->accept(this);
+        auto lv  = std::any_cast<std::shared_ptr<CVal>>(lav);
+        auto rv  = std::any_cast<std::shared_ptr<CVal>>(rav);
+
+        auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Mod);
+        return res;
+    }
     return 0;
 }
 
+/// mulExp Mul unaryExp	# mul
+/// \param context
+/// \return
 std::any Visitor::visitMul(SysyParser::MulContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // addExp と mulExp IntORFloatCVal returnする
+        auto lav = context->mulExp()->accept(this);
+        auto rav = context->unaryExp()->accept(this);
+        auto lv  = std::any_cast<std::shared_ptr<CVal>>(lav);
+        auto rv  = std::any_cast<std::shared_ptr<CVal>>(rav);
+
+        auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Mul);
+        return res;
+    }
     return 0;
 }
 
@@ -417,24 +490,55 @@ std::any Visitor::visitMul(SysyParser::MulContext* context)
 //	unaryExp				# mulExp_
 std::any Visitor::visitMulExp_(SysyParser::MulExp_Context* context)
 {
+    // FINAL
     return context->unaryExp()->accept(this);
 }
 
 /// addExp:
-//	mulExp				# addExp_
+///	mulExp				# addExp_
+/// \param context
+/// \return Returns what mulExp returns
 std::any Visitor::visitAddExp_(SysyParser::AddExp_Context* context)
 {
     // Actually it is mulExp
+    // FINAL
     return context->mulExp()->accept(this);
 }
 
+/// addExp:
+///	| addExp Add mulExp	# add
+///  \param context
+///  \return
 std::any Visitor::visitAdd(SysyParser::AddContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // addExp と mulExp IntORFloatCVal returnする
+        auto lav = context->addExp()->accept(this);
+        auto rav = context->mulExp()->accept(this);
+        auto lv  = std::any_cast<std::shared_ptr<CVal>>(lav);
+        auto rv  = std::any_cast<std::shared_ptr<CVal>>(rav);
+
+        auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Add);
+        return res;
+    }
     return 0;
 }
 
+/// 	| addExp Sub mulExp	# sub;
+/// \param context
+/// \return
 std::any Visitor::visitSub(SysyParser::SubContext* context)
 {
+    if (g_sw->isConst.get()) {
+        // addExp と mulExp IntORFloatCVal returnする
+        auto lav = context->addExp()->accept(this);
+        auto rav = context->mulExp()->accept(this);
+        auto lv  = std::any_cast<std::shared_ptr<CVal>>(lav);
+        auto rv  = std::any_cast<std::shared_ptr<CVal>>(rav);
+
+        auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Sub);
+        return res;
+    }
     return 0;
 }
 

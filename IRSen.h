@@ -6,10 +6,13 @@
 #define SYSYLEX_IRSEN_H
 
 #include <string>
+#include <utility>
+#include "IRTypes.h"
+#include "IRVal.h"
 
 namespace IRCtrl
 {
-enum class IROP {
+enum class IROp {
     // INT
     ADD = 100,
     SUB,
@@ -50,38 +53,26 @@ enum class IROP {
     FCMP,
 
     // MISC
-    PHI = 200
+    PHI = 200,
+
+    // DONTMIND
+    UNKNOWN = 114514
 };
 
 class IRSen
 {
 public:
-    IRSen();
-
-    std::string name;
-
+    IRSen() = default;
+    explicit IRSen(string name)
+        : name(std::move(name))
+    {
+        _op = IROp::UNKNOWN;
+    }
+    std::string         name;
     virtual std::string toString() = 0;
 
 protected:
-    IROP _op;
-};
-
-class IntAlgoSen : public IRSen
-{
-public:
-    virtual std::string toString() override;
-};
-
-class LogiSen : public IRSen
-{
-public:
-    virtual std::string toString() override;
-};
-
-class FunctionSen : public IRSen
-{
-public:
-    virtual std::string toString() override;
+    IROp _op;
 };
 
 class VarSen : public IRSen
@@ -95,12 +86,28 @@ class ConstSen : public IRSen
 public:
     virtual std::string toString() override;
 };
+
+/// Global Val: Including i32/float global single/array. Excluding func def.
+class GlobalValDeclSen : public IRSen
+{
+public:
+    shared_ptr<NumberVal> val;
+    GlobalValDeclSen(const std::string& name, const shared_ptr<NumberVal>& val)
+        : IRSen(name)
+        , val(val)
+    {
+    }
+    string toString() override;
+};
+
+class LocalValDeclSen : public IRSen
+{
+public:
+    // TODO
+};
+
+
 }   // namespace IRCtrl
 
-// 能不能在遍历语法树的同时写出三地址代码？能吗？
-// 比如在int a = (5*b)+c/2;
-// varDecl(INT "a" exp(add mul 5 b dev c 2)
-//?好像可以
-// 所以应该不需要参考代码的一些自己另外定义的操作？
 
 #endif   // SYSYLEX_IRSEN_H

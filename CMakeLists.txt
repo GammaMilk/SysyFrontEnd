@@ -11,6 +11,6 @@ link_directories(/usr/local/lib)
 file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/Sysy*.cpp)
 file(GLOB SRC_LIST_SYSY ${SRC_LIST_SYSY} ${PROJECT_SOURCE_DIR}/IR*.cpp)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} FMain.cpp IRVal.cpp IRVal.h IRValType.cpp IRValType.h IRUtils.cpp IRUtils.h IRExceptions.h IRGlobalSwitch.h)
+add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} FMain.cpp IRVal.cpp IRVal.h IRTypes.cpp IRTypes.h IRUtils.cpp IRUtils.h IRExceptions.h IRGlobalSwitch.h IRProgram.cpp IRProgram.h IRBasicBlock.cpp IRBasicBlock.h)
 target_include_directories(${PROJECT_NAME} PUBLIC /usr/local/include/antlr4-runtime)
 target_link_libraries(${PROJECT_NAME} antlr4-runtime)

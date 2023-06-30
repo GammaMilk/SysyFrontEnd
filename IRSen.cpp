@@ -4,12 +4,7 @@
 
 #include "IRSen.h"
 
-IRCtrl::IRSen::IRSen() = default;
 
-std::string IRCtrl::IRSen::toString()
-{
-    return {};
-}
 
 std::string IRCtrl::ConstSen::toString()
 {
@@ -21,17 +16,24 @@ std::string IRCtrl::VarSen::toString()
     return {};
 }
 
-std::string IRCtrl::FunctionSen::toString()
-{
-    return {};
-}
 
-std::string IRCtrl::LogiSen::toString()
+string IRCtrl::GlobalValDeclSen::toString()
 {
-    return std::string();
-}
-
-std::string IRCtrl::IntAlgoSen::toString()
-{
-    return std::string();
+    stringstream ss;
+    ss << "@" << this->val->name << " = ";
+    if (this->val->isConst)
+        ss << "constant";
+    else
+        ss << "global";
+    // constant float 0x4041475CE0000000
+    switch (this->val->type) {
+    case IRValType::Func: break;   // Unreachable
+    case IRValType::Int: ss << " i32 " << this->val->toString(); break;
+    case IRValType::Float: ss << " float " << this->val->toString(); break;
+    case IRValType::IntArr: break;   // TODO Impl Arr decl stmt
+    case IRValType::FloatArr: break;
+    case IRValType::Void: break;
+    case IRValType::Unknown: break;
+    }
+    return ss.str();
 }

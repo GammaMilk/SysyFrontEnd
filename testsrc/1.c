@@ -12,16 +12,18 @@ const float RADIUS = 5.5, PI = 03.141592653589793, EPS = 1e-6;
 const float PI_HEX = 0x1.921fb6p+1, HEX2 = 0x.AP-3;
 
 // float constant evaluation
-//const float FACT = -.33E+5, EVAL1 = PI * RADIUS * RADIUS, EVAL2 = 2 * PI_HEX * RADIUS, EVAL3 = PI * 2 * RADIUS;
+const float FACT = -.33E+5, EVAL1 = PI * RADIUS * RADIUS, EVAL2 = 2 * PI_HEX * RADIUS,
+            EVAL3 = PI * 2 * RADIUS;
 
 // float constant implicit conversion
 const float CONV1 = 233, CONV2 = 0xfff;
 
+const int   cccccccc = 2 * 31 * 1847;
+const float dddddddd = (cccccccc * 2) / (31 * 1847) / 2;
 
-float bb = 2.3, cc = 3.3;
-const int c[2][3] = {{1, 2, 3},
-                     {4, 5, 6}};
-float d[1 * 2] = {1.1, 2.2};
+float     bb = 2.3, cc = 3.3;
+const int c[2][3]  = {{1, 2, 3}, {4, 5, 6}};
+float     d[1 * 2] = {1.1, 2.2};
 
 int func(int p)
 {
