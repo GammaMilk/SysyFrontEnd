@@ -45,3 +45,6 @@ cmake-build-*/
 # antlr
 .antlr/
 .cache/
+
+# test
+testsrc/1.txt
