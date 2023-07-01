@@ -71,7 +71,7 @@ int main(int, const char**)
 
     cout << endl;
 
-    outfile << tree->toStringTree(&parser, true) << endl;
+    //    outfile << tree->toStringTree(&parser, true) << endl;
 
     g_builder->setFilename(sourceFileName);
     g_builder->build(outfile);

@@ -30,10 +30,19 @@ string IRCtrl::GlobalValDeclSen::toString()
     case IRValType::Func: break;   // Unreachable
     case IRValType::Int: ss << " i32 " << this->val->toString(); break;
     case IRValType::Float: ss << " float " << this->val->toString(); break;
-    case IRValType::IntArr: break;   // TODO Impl Arr decl stmt
-    case IRValType::FloatArr: break;
+    case IRValType::Arr: {
+        auto x = std::dynamic_pointer_cast<CArr>(this->val);
+        if (x->containedType == IRValType::Float) {
+            ss << " float " << this->val->toString();
+        } else {
+            ss << " i32 " << this->val->toString();
+        }
+    } break;
     case IRValType::Void: break;
     case IRValType::Unknown: break;
+    case IRValType::Pointer: break;
+    case IRValType::FloatArr: break;
+    case IRValType::IntArr: break;
     }
     return ss.str();
 }

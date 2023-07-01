@@ -24,7 +24,7 @@ std::string IRCtrl::IRBuilder::build()
     std::stringstream ss;
 
     // Other Info about file
-    ss << "; Filename = " << this->_filename;
+    ss << "; Filename = " << this->_filename << "\n";
     for (auto& one : _stmts) {
         ss << one;
         ss << '\n';
@@ -35,6 +35,8 @@ std::string IRCtrl::IRBuilder::build()
         GlobalValDeclSen declSen(c->name, c);
         ss << declSen.toString() << "\n";
     }
+
+    // TODO Var and Function
     return ss.str();
 }
 

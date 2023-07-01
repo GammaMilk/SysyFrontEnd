@@ -6,6 +6,7 @@
 
 #include "antlr4-runtime.h"
 #include "SysyParser.h"
+#include "IRTypes.h"
 
 
 /**
@@ -281,4 +282,7 @@ public:
     std::any visitOr(SysyParser::OrContext* context) override;
 
     std::any visitLOrExp_(SysyParser::LOrExp_Context* context) override;
+
+private:
+    IRCtrl::IRValType curBType;
 };

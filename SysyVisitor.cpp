@@ -6,10 +6,12 @@
 #include "IRUtils.h"
 #include "IRExceptions.h"
 #include "IRGlobalSwitch.h"
+#include "IRBBController.h"
 
 std::shared_ptr<IRCtrl::IRBuilder>         g_builder;
 std::shared_ptr<IRCtrl::IRLayerController> g_lc;
 std::shared_ptr<IRCtrl::IRGlobalSwitch>    g_sw;
+std::shared_ptr<IRCtrl::IRBBController>    g_bbc;
 
 using namespace IRCtrl;
 
@@ -61,10 +63,10 @@ std::any Visitor::visitDecl(SysyParser::DeclContext* context)
 std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext* context)
 {
     // Set this layer to const.
-    g_sw->isConst.push();
+    g_sw->isConst.dive();
     g_sw->isConst.set(true);
     for (auto& x : context->constDef()) { x->accept(this); }
-    g_sw->isConst.pop();   // resume
+    g_sw->isConst.ascend();   // resume
     return 0;
 }
 
@@ -84,7 +86,7 @@ std::any Visitor::visitFloat(SysyParser::FloatContext* context)
 /// \return
 std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
 {
-    LOGD("Enter VisitConstDef");
+    //    LOGD("Enter VisitConstDef");
     auto p      = context->parent;
     auto parent = dynamic_cast<SysyParser::ConstDeclContext*>(p);
     if (parent != nullptr) {
@@ -92,13 +94,13 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
         IRCtrl::IRValType type;
         if (dynamic_cast<SysyParser::FloatContext*>(btype)) {
             type = IRCtrl::IRValType::Float;
-            LOGD("Type: Float");
+            //            LOGD("Type: Float");
         } else {
             type = IRCtrl::IRValType::Int;
-            LOGD("Type: Int");
+            //            LOGD("Type: Int");
         }
         auto idName = string(context->Ident()->getText());
-        LOGD("Name: " << idName);
+        //        LOGD("Name: " << idName);
 
         auto initVal = context->initVal();
 
@@ -119,7 +121,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
             if (type == IRCtrl::IRValType::Int) {
                 // Int
                 int num = (int_val != nullptr) ? int_val->ival : (int)float_val->fval;
-                LOGD(num);
+                //                LOGD(num);
                 // Judge if in Global
                 if (g_lc->isInGlobal()) {
                     // global const int
@@ -133,7 +135,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 // Float
                 float num;
                 num = (float_val != nullptr) ? float_val->fval : (float)int_val->ival;
-                LOGD(num);
+                //                LOGD(num);
                 // const float in global?
                 if (g_lc->isInGlobal()) {
                     // const float global
@@ -146,23 +148,85 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
             }
 
         } else {
-            // array val
+            // array val list
+
+            // Array 1 : deal with shape
+            std::deque<size_t> shape;
+            for (auto& e : context->exp()) {
+                auto   a           = e->accept(this);
+                auto   number_val  = std::any_cast<std::shared_ptr<CVal>>(a);
+                auto   int_val     = std::dynamic_pointer_cast<IntCVal>(number_val);
+                auto   float_val   = std::dynamic_pointer_cast<FloatCVal>(number_val);
+                size_t thisDimSize = (int_val != nullptr) ? int_val->ival : (size_t)float_val->fval;
+                shape.emplace_back(thisDimSize);
+            }
+
+            // Array 2 : deal with init data
+            auto iList_a     = context->initVal()->accept(this);
+            auto iList       = any_cast<shared_ptr<InitListVal>>(iList_a);
+            iList->contained = type;
             // TODO  ARRAY CONST GEN
-            LOGD("Array");
-            LOGD(initVal->getText());
+            if (g_lc->isInGlobal()) {
+                shared_ptr<CArr> thisArr;
+                thisArr       = Utils::buildAnCArrFromInitList(iList, shape);
+                thisArr->name = idName;
+                g_lc->push(thisArr);
+                g_builder->program->addGlobalConst(thisArr);
+            }
+
+
+            //            LOGD("Array");
+            //            LOGD(initVal->getText());
         }
     }
-    LOGD("Exit  VisitConstDef");
+    //    LOGD("Exit  VisitConstDef");
     return 0;
 }
 
+/// varDecl: bType varDef (Comma varDef)* Semicolon;
+/// \param context
+/// \return
 std::any Visitor::visitVarDecl(SysyParser::VarDeclContext* context)
 {
+    // FINAL
+    this->curBType = dynamic_cast<SysyParser::FloatContext*>(context->bType())
+                         ? IRCtrl::IRValType::Float
+                         : IRCtrl::IRValType::Int;
+    for (auto& v : context->varDef()) { v->accept(this); }
     return 0;
 }
 
+/// varDef: Ident (Lbracket exp Rbracket)* (Assign initVal)?;
+/// \param context
+/// \return
 std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
 {
+    LOGD("Enter VisitVarDef");
+    IRCtrl::IRValType type   = this->curBType;
+    string            idName = context->Ident()->getText();
+    if (g_lc->isInGlobal()) {
+        if (context->exp().empty()) {
+            // Not ARRAY
+            // TODO
+        } else {
+            // Array
+            // Array 1 : deal with shape
+            std::deque<size_t> shape;
+            for (auto& e : context->exp()) {
+                auto   a           = e->accept(this);
+                auto   number_val  = std::any_cast<std::shared_ptr<CVal>>(a);
+                auto   int_val     = std::dynamic_pointer_cast<IntCVal>(number_val);
+                auto   float_val   = std::dynamic_pointer_cast<FloatCVal>(number_val);
+                size_t thisDimSize = (int_val != nullptr) ? int_val->ival : (size_t)float_val->fval;
+                shape.emplace_back(thisDimSize);
+            }
+            // TODO
+        }
+    } else {
+        // TODO local define
+    }
+
+    LOGD("Exit VisitVarDef");
     return 0;
 }
 
@@ -172,9 +236,23 @@ std::any Visitor::visitInit(SysyParser::InitContext* context)
     return context->exp()->accept(this);
 }
 
+/// Lbrace (initVal (Comma initVal)*)? Rbrace	# initList;
+/// \param context
+/// \return
 std::any Visitor::visitInitList(SysyParser::InitListContext* context)
 {
-    return 0;
+    auto ril = make_shared<InitListVal>();
+    for (auto& x : context->initVal()) {
+        auto a = x->accept(this);
+        try {
+            auto il = any_cast<shared_ptr<InitListVal>>(a);
+            ril->initList.emplace_back(il);
+        } catch (const std::bad_any_cast&) {
+            auto cv = any_cast<shared_ptr<CVal>>(a);
+            ril->cVal.emplace_back(cv);
+        }
+    }
+    return ril;
 }
 
 /// funcDef: funcType Ident Lparen funcFParams? Rparen block;
@@ -217,11 +295,11 @@ std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
 std::any Visitor::visitBlock(SysyParser::BlockContext* context)
 {
     LOGD("Enter Block");
-    g_lc->enter();
+    g_lc->dive();
     // TODO visitBlock
 
     LOGD("Exit  Block");
-    g_lc->exit();
+    g_lc->ascend();
     return 0;
 }
 
@@ -313,7 +391,10 @@ std::any Visitor::visitPrimaryExp_(SysyParser::PrimaryExp_Context* context)
         } else {
             return context->number()->accept(this);
         }
+    } else {
+        // TODO
     }
+    return 0;
 }
 /// primaryExp:
 //	Lparen exp Rparen	# primaryExp_

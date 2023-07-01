@@ -26,9 +26,11 @@ enum class IRValType {
     Func,
     Int,
     Float,
-    IntArr,
-    FloatArr,
+    Arr,
     Void,
+    Pointer,
+    FloatArr,   // compatibility
+    IntArr,     // compatibility
 
     Unknown,
 };
@@ -39,6 +41,79 @@ class IPrintable
 public:
     virtual string toString() = 0;
 };
+
+/// Used for Functions FParams, Defines
+class IRType
+{
+public:
+    IRValType type = IRValType::Unknown;
+    explicit IRType(IRValType t)
+        : type(t)
+    {
+    }
+};
+using SPType = shared_ptr<IRType>;
+using UPType = unique_ptr<IRType>;
+
+class IntType : public IRType
+{
+public:
+    IntType()
+        : IRType(IRValType::Int)
+    {
+    }
+};
+class FloatType : public IRType
+{
+public:
+    FloatType()
+        : IRType(IRValType::Float)
+    {
+    }
+};
+class ArrayType : public IRType
+{
+public:
+    explicit ArrayType(const IRType& inner, size_t nElem)
+        : IRType(IRValType::Arr)
+        , innerType(inner)
+        , nElem(nElem)
+    {
+    }
+    IRType innerType;
+    size_t nElem;
+};
+class FuncType : public IRType
+{
+public:
+    explicit FuncType(IRValType retT, const vector<SPType>& paramsT)
+        : IRType(IRValType::Func)
+        , retType(retT)
+    {
+        for (auto& x : paramsT) paramsType.emplace_back(x);
+    }
+    IRValType      retType;
+    vector<SPType> paramsType;
+};
+class VoidType : public IRType
+{
+public:
+    VoidType()
+        : IRType(IRValType::Void)
+    {
+    }
+};
+class PointerType : public IRType
+{
+public:
+    explicit PointerType(IRType target)
+        : IRType(IRValType::Pointer)
+        , targetType(target)
+    {
+    }
+    IRType targetType;
+};
+
 }   // namespace IRCtrl
 
 #endif   // SYSYLEX_IRTYPES_H

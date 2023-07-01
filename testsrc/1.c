@@ -22,7 +22,7 @@ const int   cccccccc = 2 * 31 * 1847;
 const float dddddddd = (cccccccc * 2) / (31 * 1847) / 2;
 
 float     bb = 2.3, cc = 3.3;
-const int c[2][3]  = {{1, 2, 3}, {4, 5, 6}};
+const int c[2][3]  = {{}, {4, 5, 6}};
 float     d[1 * 2] = {1.1, 2.2};
 
 int func(int p)

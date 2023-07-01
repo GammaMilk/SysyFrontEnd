@@ -22,6 +22,9 @@ public:
     static std::shared_ptr<CVal>
     constBiCalc(const std::shared_ptr<CVal>& a, const std::shared_ptr<CVal>& b, IRValOp op);
 
+    static std::shared_ptr<CArr>
+    buildAnCArrFromInitList(const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape);
+
 private:
     template<class T1, class T2>
     static T1 T1OP(T1 v1, T2 v2, IRValOp op);

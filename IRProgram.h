@@ -7,6 +7,7 @@
 
 #include "IRTypes.h"
 #include "IRVal.h"
+#include "Function.h"
 
 namespace IRCtrl
 {

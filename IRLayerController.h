@@ -20,15 +20,15 @@ public:
      */
     IRLayerController();
 
-    void enter();
+    void dive();
 
-    void exit();
+    void ascend();
 
     /**
      * Push a sentence into the symbol table.
-     * @param sen
+     * @param val
      */
-    void push(const std::shared_ptr<IRVal>& sen);
+    void push(const std::shared_ptr<IRVal>& val);
 
     std::shared_ptr<IRVal> query(const std::shared_ptr<IRVal>& val, bool recursively = true);
 

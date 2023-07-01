@@ -3,6 +3,7 @@
 //
 
 #include "IRUtils.h"
+#include "IRLogger.h"
 
 namespace IRCtrl
 {
@@ -84,6 +85,40 @@ Utils::constBiCalc(const std::shared_ptr<CVal>& a, const std::shared_ptr<CVal>& 
         res->ival = T1OP(_a, _b, op);
         return res;
     }
+}
+/// Build a completely CArr from AST
+/// \param iList
+/// \return
+std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
+    const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape
+)
+{
+    // iList contains vector<shared_ptr<InitListVal>> initList and vector<shared_ptr<CVal>> cVal;
+
+    // FUCk, Don't use a stack to simulate a recursively process
+    auto r    = make_shared<CArr>("", iList->contained);
+    r->_shape = shape;
+    LOGD("init SHAPE size=" << shape.size());
+    if (iList->empty()) {
+        r->isZero = true;
+        return r;
+    } else {
+        if (!iList->cVal.empty()) {
+            r->_childVals = iList->cVal;
+            return r;
+        } else {
+            // the most fuza no bufen
+            // first cut shape to shape[1:]
+            auto newShape = shape;
+            newShape.pop_front();
+            LOGD("new SHAPE size=" << newShape.size());
+            for (auto& x : iList->initList) {
+                auto t = buildAnCArrFromInitList(x, newShape);
+                r->_childArrs.emplace_back(std::move(t));
+            }
+        }
+    }
+    return r;
 }
 template<class T1, class T2>
 T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)

@@ -16,18 +16,18 @@ namespace IRCtrl
 
 IRCtrl::IRLayerController::IRLayerController()
 {
-    enter();
+    dive();
 }
 
 
-void IRCtrl::IRLayerController::enter()
+void IRCtrl::IRLayerController::dive()
 {
     IRLayer layer;
     this->_layers.emplace_back(layer);
 }
 
 
-void IRCtrl::IRLayerController::exit()
+void IRCtrl::IRLayerController::ascend()
 {
     this->_layers.pop_back();
 }
@@ -57,9 +57,8 @@ IRCtrl::IRLayerController::query(const std::string& symbol_name, bool recursivel
 }
 
 
-void IRCtrl::IRLayerController::push(const std::shared_ptr<IRVal>& sen)
+void IRCtrl::IRLayerController::push(const std::shared_ptr<IRVal>& val)
 {
-    this->_layers[_layers.size() - 1].symbols.insert(std::make_pair(sen->name, sen));
-    LOGD(this->_layers.back().symbols.size());
+    this->_layers[_layers.size() - 1].symbols.insert(std::make_pair(val->name, val));
 }
 }   // namespace IRCtrl

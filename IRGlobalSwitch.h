@@ -14,13 +14,12 @@ template<typename T>
 class IRSwitch
 {
 public:
-    virtual void push() = 0;
+    virtual void dive()   = 0;
+    virtual void ascend() = 0;
 
     virtual void set(T) = 0;
 
     virtual T get() = 0;
-
-    virtual void pop() = 0;
 };
 
 class IRBoolSwitch : public IRSwitch<bool>
@@ -33,11 +32,11 @@ public:
     {
     }
 
-    void push() override { _stack.push(_cur); }
+    void dive() override { _stack.push(_cur); }
 
     void set(bool t) override { _cur = t; }
 
-    void pop() override { _stack.pop(); }
+    void ascend() override { _stack.pop(); }
 
     bool get() override { return _cur; }
 
