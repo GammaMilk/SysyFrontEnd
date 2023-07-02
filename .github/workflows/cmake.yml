@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Download ANTLR Runtime
       run: |
-        mkdir antlr-rt && cd antle-rt
+        mkdir antlr-rt && cd antlr-rt
         wget -O antlr.zip https://www.antlr.org/download/antlr4-cpp-runtime-4.13.0-source.zip
 
     - name: Unzip ANTLR Runtime
@@ -34,6 +34,7 @@ jobs:
         cmake ..
         cmake --build .
         sudo cmake --install .
+        cd ../../
         
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
