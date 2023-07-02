@@ -285,4 +285,6 @@ public:
 
 private:
     IRCtrl::IRValType curBType;
+    IRCtrl::IRValType curFuncRetType = IRCtrl::IRValType::Unknown;
+    bool              curInAFunction = false;
 };

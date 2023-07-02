@@ -3,14 +3,16 @@
 //
 #include "IRLogger.h"
 
-std::ofstream g_debug_out;
-
+std::ofstream g_debug_null_out = std::ofstream("/dev/null");
+bool          g_enable_log     = true;
 std::ostream& sysy_debug()
 {
 #ifdef _DEBUG
-    return std::cerr;
+    if (g_enable_log)
+        return std::cerr;
+    else
+        return g_debug_null_out;
 #else
-    g_debug_out = std::ofstream("/dev/null");
-    return g_debug_out;
+    return g_debug_null_out;
 #endif
 }

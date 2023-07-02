@@ -61,9 +61,8 @@ public:
     }
 };
 
-class VVal : public NumberVal
-{
-};
+
+
 
 /**
  * Const Value, including const int and const float.
@@ -77,26 +76,12 @@ public:
         isConst = true;
     }
 
-    //    CVal(const std::string& name1, float v)
-    //        : CVal(name1)
-    //    {
-    //        fval = v;
-    //    }
-    //
-    //    CVal(const std::string& name1, int v)
-    //        : CVal(name1)
-    //    {
-    //        ival = v;
-    //    }
 };
 
 class IntCVal : public CVal
 {
 public:
-    union {
-        float fval;
-        int   ival{};
-    };
+    int iVal{};
     explicit IntCVal(const std::string& name1)
         : CVal(name1)
     {
@@ -109,7 +94,7 @@ public:
     //        : CVal(name1, val)
     {
         name = name1;
-        ival = val;
+        iVal = val;
         type = IRValType::Int;
     }
 
@@ -120,22 +105,19 @@ public:
 class FloatCVal : public CVal
 {
 public:
-    union {
-        float fval;
-        int   ival{};
-    };
+    float fVal = .0f;
     explicit FloatCVal(const std::string& name1)
         : CVal(name1)
     {
         type = IRValType::Float;
-        fval = 0;
+        fVal = 0;
     }
 
     FloatCVal(const std::string& name1, float val)
         : CVal(name1)
     {
         type = IRValType::Float;
-        fval = val;
+        fVal = val;
     }
 
     void   unary() override;
@@ -177,9 +159,75 @@ protected:
     virtual string shapeString();
 };
 
+/// No need to init "type" in this constructor.
+/// This var will filled by its inherits classes
+class VVal : public NumberVal
+{
+public:
+    explicit VVal(const string& name1)
+        : NumberVal(name1)
+    {
+        isConst = false;
+    }
+    bool hasInit = false;
+};
 
+class IntVal : public VVal
+{
+public:
+    int iVal{};
+    explicit IntVal(const string& name1)
+        : VVal(name1)
+    {
+        type = IRValType::Int;
+    }
+    IntVal(const string& name1, int val)
+        : IntVal(name1)
+    {
+        iVal = val;
+    }
 
+    string toString() override;
+};
+class FloatVal : public VVal
+{
+public:
+    float fVal{};
+    explicit FloatVal(const string& name1)
+        : VVal(name1)
+    {
+        type = IRValType::Float;
+    }
+    FloatVal(const string& name1, float val)
+        : FloatVal(name1)
+    {
+        fVal = val;
+    }
+    string toString() override;
+};
 
+class VArr : public VVal
+{
+public:
+    explicit VArr(const string& name1, IRValType contained)
+        : VVal(name1)
+        , containedType(contained)
+    {
+        isConst = false;
+        type    = IRValType::Arr;
+    }
+
+    virtual string toString() override;
+
+    std::deque<size_t>       _shape;
+    bool                     isZero = false;
+    vector<shared_ptr<VArr>> _childArrs;
+    vector<shared_ptr<CVal>> _childVals;
+    IRValType                containedType = IRValType::Float;
+
+protected:
+    virtual string shapeString();
+};
 
 }   // namespace IRCtrl
 #endif   // SYSYLEX_IRVAL_H

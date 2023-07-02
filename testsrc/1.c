@@ -22,13 +22,21 @@ const int   cccccccc = 2 * 31 * 1847;
 const float dddddddd = (cccccccc * 2) / (31 * 1847) / 2;
 
 float     bb = 2.3, cc = 3.3;
+float     dd;
 const int c[2][3]  = {{}, {4, 5, 6}};
 float     d[1 * 2] = {1.1, 2.2};
+float     e[12];
 
 int func(int p)
 {
     p = p - 1;
     return p;
+}
+
+void  VoidFunc() {}
+float floatFunc()
+{
+    return 0.1;
 }
 
 int main()

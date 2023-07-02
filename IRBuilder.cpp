@@ -31,7 +31,14 @@ std::string IRCtrl::IRBuilder::build()
     }
 
     // Main Code
+    // Global const
     for (auto& c : this->program->getGlobalConst()) {
+        GlobalValDeclSen declSen(c->name, c);
+        ss << declSen.toString() << "\n";
+    }
+
+    // Global Variables
+    for (auto& c : this->program->getGlobalVar()) {
         GlobalValDeclSen declSen(c->name, c);
         ss << declSen.toString() << "\n";
     }

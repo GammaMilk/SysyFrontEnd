@@ -32,11 +32,21 @@ string IRCtrl::GlobalValDeclSen::toString()
     case IRValType::Float: ss << " float " << this->val->toString(); break;
     case IRValType::Arr: {
         auto x = std::dynamic_pointer_cast<CArr>(this->val);
-        if (x->containedType == IRValType::Float) {
-            ss << " float " << this->val->toString();
+        if (x) {
+            if (x->containedType == IRValType::Float) {
+                ss << " float " << this->val->toString();
+            } else {
+                ss << " i32 " << this->val->toString();
+            }
         } else {
-            ss << " i32 " << this->val->toString();
+            auto y = std::dynamic_pointer_cast<VArr>(this->val);
+            if (y->containedType == IRValType::Float) {
+                ss << " float " << this->val->toString();
+            } else {
+                ss << " i32 " << this->val->toString();
+            }
         }
+
     } break;
     case IRValType::Void: break;
     case IRValType::Unknown: break;

@@ -68,21 +68,21 @@ Utils::constBiCalc(const std::shared_ptr<CVal>& a, const std::shared_ptr<CVal>& 
         auto  res = std::make_shared<FloatCVal>("");
         float _a, _b;
         if (af != nullptr)
-            _a = af->fval;
+            _a = af->fVal;
         else
-            _a = (float)ai->ival;
+            _a = (float)ai->iVal;
         if (bf != nullptr)
-            _b = bf->fval;
+            _b = bf->fVal;
         else
-            _b = (float)bi->ival;
-        res->fval = FLOP(_a, _b, op);
+            _b = (float)bi->iVal;
+        res->fVal = FLOP(_a, _b, op);
         return res;
     } else {
         int _a, _b;
-        _a        = ai->ival;
-        _b        = bi->ival;
+        _a        = ai->iVal;
+        _b        = bi->iVal;
         auto res  = std::make_shared<IntCVal>("");
-        res->ival = T1OP(_a, _b, op);
+        res->iVal = T1OP(_a, _b, op);
         return res;
     }
 }
@@ -98,7 +98,6 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
     // FUCk, Don't use a stack to simulate a recursively process
     auto r    = make_shared<CArr>("", iList->contained);
     r->_shape = shape;
-    LOGD("init SHAPE size=" << shape.size());
     if (iList->empty()) {
         r->isZero = true;
         return r;
@@ -114,6 +113,33 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
             LOGD("new SHAPE size=" << newShape.size());
             for (auto& x : iList->initList) {
                 auto t = buildAnCArrFromInitList(x, newShape);
+                r->_childArrs.emplace_back(std::move(t));
+            }
+        }
+    }
+    return r;
+}
+std::shared_ptr<VArr> Utils::buildAnVArrFromInitList(
+    const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape
+)
+{
+    auto r    = make_shared<VArr>("", iList->contained);
+    r->_shape = shape;
+    if (iList->empty()) {
+        r->isZero = true;
+        return r;
+    } else {
+        if (!iList->cVal.empty()) {
+            r->_childVals = iList->cVal;
+            return r;
+        } else {
+            // the most fuza no bufen
+            // first cut shape to shape[1:]
+            auto newShape = shape;
+            newShape.pop_front();
+            LOGD("new SHAPE size=" << newShape.size());
+            for (auto& x : iList->initList) {
+                auto t = buildAnVArrFromInitList(x, newShape);
                 r->_childArrs.emplace_back(std::move(t));
             }
         }

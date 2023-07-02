@@ -14,6 +14,7 @@
 #endif
 
 std::ostream& sysy_debug();
+extern bool   g_enable_log;
 
 #define ANSI_COLOR_BLUE "\033[1;34m"
 #define ANSI_COLOR_ORANGE "\033[1;33m"
