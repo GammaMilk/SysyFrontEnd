@@ -25,10 +25,11 @@ jobs:
         wget -O antlr.zip https://www.antlr.org/download/antlr4-cpp-runtime-4.13.0-source.zip
 
     - name: Unzip ANTLR Runtime
-      run: unzip antlr.zip
+      run: cd antlr-rt && unzip antlr.zip
 
     - name: Install ANTLR
       run: |
+        cd antlr-rt
         mkdir build
         cd build
         cmake ..
