@@ -10,7 +10,7 @@
 
 IRCtrl::IRBuilder::IRBuilder()
 {
-    program = make_unique<IRProgram>();
+    program = make_shared<IRProgram>();
 }
 
 
@@ -43,7 +43,10 @@ std::string IRCtrl::IRBuilder::build()
         ss << declSen.toString() << "\n";
     }
 
-    // TODO Var and Function
+    // Functions
+    for (auto& f : this->program->getFuncs()) { ss << f->toString() << "\n"; }
+
+    // TODO Var and IRFunction
     return ss.str();
 }
 
@@ -57,16 +60,6 @@ IRCtrl::IRBuilder::IRBuilder(const std::string& filename)
 void IRCtrl::IRBuilder::_as(const std::string& s)
 {
     _stmts.emplace_back(s);
-}
-
-bool IRCtrl::IRBuilder::isInGlobalScope() const
-{
-    return _inGlobalScope;
-}
-
-void IRCtrl::IRBuilder::setInGlobalScope(bool x)
-{
-    _inGlobalScope = x;
 }
 
 
@@ -85,4 +78,18 @@ int IRCtrl::IRBuilder::getLastLabel() const
 void IRCtrl::IRBuilder::setFilename(const std::string& filename)
 {
     this->_filename = filename;
+}
+void IRCtrl::IRBuilder::createFunction(IRCtrl::FuncType& type1, const string& name1)
+{
+    this->thisFunction = make_shared<IRFunction>(type1, name1);
+}
+void IRCtrl::IRBuilder::finishFunction()
+{
+    assert(this->thisFunction != nullptr);
+    this->program->addFunction(thisFunction);
+    this->thisFunction = nullptr;
+}
+const shared_ptr<IRCtrl::IRProgram>& IRCtrl::IRBuilder::getProgram() const
+{
+    return program;
 }

@@ -6,6 +6,7 @@
 #define SYSYLEX_IRTYPES_H
 #include <memory>
 #include <any>
+#include <utility>
 #include <vector>
 #include <stack>
 #include <sstream>
@@ -31,8 +32,9 @@ enum class IRValType {
     Pointer,
     FloatArr,   // compatibility
     IntArr,     // compatibility
+    Bool,
 
-    Unknown,
+    Unknown
 };
 
 enum class IRValOp { Add, Sub, Mul, Div, Mod };
@@ -43,7 +45,7 @@ public:
 };
 
 /// Used for Functions FParams, Defines
-class IRType
+class IRType : public IPrintable
 {
 public:
     IRValType type = IRValType::Unknown;
@@ -51,6 +53,7 @@ public:
         : type(t)
     {
     }
+    string toString() override { return {}; }
 };
 using SPType = shared_ptr<IRType>;
 using UPType = unique_ptr<IRType>;
@@ -62,6 +65,7 @@ public:
         : IRType(IRValType::Int)
     {
     }
+    string toString() override;
 };
 class FloatType : public IRType
 {
@@ -70,18 +74,20 @@ public:
         : IRType(IRValType::Float)
     {
     }
+    string toString() override;
 };
 class ArrayType : public IRType
 {
 public:
-    explicit ArrayType(const IRType& inner, size_t nElem)
+    explicit ArrayType(const IRValType& inner, vector<size_t> shape)
         : IRType(IRValType::Arr)
         , innerType(inner)
-        , nElem(nElem)
+        , innerShape(std::move(shape))
     {
     }
-    IRType innerType;
-    size_t nElem;
+    IRValType      innerType;
+    vector<size_t> innerShape;
+    string         toString() override;
 };
 class FuncType : public IRType
 {
@@ -94,6 +100,7 @@ public:
     }
     IRValType      retType;
     vector<SPType> paramsType;
+    string         toString() override;
 };
 class VoidType : public IRType
 {
@@ -102,6 +109,7 @@ public:
         : IRType(IRValType::Void)
     {
     }
+    string toString() override;
 };
 class PointerType : public IRType
 {

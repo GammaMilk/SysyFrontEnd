@@ -8,10 +8,13 @@
 #include "IRGlobalSwitch.h"
 #include "IRBBController.h"
 
+namespace IRCtrl
+{
 std::shared_ptr<IRCtrl::IRBuilder>         g_builder;
 std::shared_ptr<IRCtrl::IRLayerController> g_lc;
 std::shared_ptr<IRCtrl::IRGlobalSwitch>    g_sw;
 std::shared_ptr<IRCtrl::IRBBController>    g_bbc;
+}   // namespace IRCtrl
 
 using namespace IRCtrl;
 
@@ -70,14 +73,22 @@ std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext* context)
     return 0;
 }
 
+/// bType: Int # int | Float # float;
+/// \param context
+/// \return
 std::any Visitor::visitInt(SysyParser::IntContext* context)
 {
-    return 0;
+    curBType = IRCtrl::IRValType::Int;
+    return curBType;
 }
 
+/// bType: Int # int | Float # float;
+/// \param context
+/// \return
 std::any Visitor::visitFloat(SysyParser::FloatContext* context)
 {
-    return 0;
+    curBType = IRCtrl::IRValType::Float;
+    return curBType;
 }
 
 /// constDef: Ident (Lbracket exp Rbracket)* Assign initVal;
@@ -127,7 +138,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                     // global const int
                     auto thisIntConstVal = std::make_shared<IntCVal>(idName, num);
                     g_lc->push(thisIntConstVal);
-                    g_builder->program->addGlobalConst(thisIntConstVal);
+                    g_builder->getProgram()->addGlobalConst(thisIntConstVal);
                 } else {
                     // TODO local const int
                 }
@@ -141,7 +152,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                     // const float global
                     auto thisFloatConstVal = make_shared<FloatCVal>(idName, num);
                     g_lc->push(thisFloatConstVal);
-                    g_builder->program->addGlobalConst(thisFloatConstVal);
+                    g_builder->getProgram()->addGlobalConst(thisFloatConstVal);
                 } else {
                     // TODO const float local
                 }
@@ -170,7 +181,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 thisArr       = Utils::buildAnCArrFromInitList(iList, shape);
                 thisArr->name = idName;
                 g_lc->push(thisArr);
-                g_builder->program->addGlobalConst(thisArr);
+                g_builder->getProgram()->addGlobalConst(thisArr);
             } else {
                 // TODO local CONST val array
             }
@@ -208,7 +219,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
     g_enable_log = false;
     LOGD("Enter VisitVarDef");
 
-    //
+
     IRCtrl::IRValType type   = this->curBType;
     string            idName = context->Ident()->getText();
     if (g_lc->isInGlobal()) {
@@ -245,7 +256,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
                     vVal->hasInit = true;
                 }
                 g_lc->push(vVal);
-                g_builder->program->addGlobalVar(vVal);
+                g_builder->getProgram()->addGlobalVar(vVal);
             } else {
                 auto vVal = make_shared<IntVal>(idName);
                 if (context->initVal() != nullptr) {
@@ -254,7 +265,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
                     vVal->hasInit = true;
                 }
                 g_lc->push(vVal);
-                g_builder->program->addGlobalVar(vVal);
+                g_builder->getProgram()->addGlobalVar(vVal);
             }
         } else {
 
@@ -285,7 +296,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
             auto thisArr     = Utils::buildAnVArrFromInitList(iList, shape);
             thisArr->name    = idName;
             g_lc->push(thisArr);
-            g_builder->program->addGlobalVar(thisArr);
+            g_builder->getProgram()->addGlobalVar(thisArr);
         }
 
         g_sw->isConst.ascend();
@@ -294,6 +305,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
     }
 
     LOGD("Exit VisitVarDef");
+    g_enable_log = true;
     return 0;
 }
 
@@ -344,16 +356,49 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     // Func name
     string idName = context->Ident()->getText();
 
-    // Function signature
-    shared_ptr<FuncType> funcType;
+    // IRFunction signature
+    // IRFunction fps
+    vector<SPFPVar> fps;
+    if (context->funcFParams()) {
+        auto fp = std::any_cast<vector<SPFPVar>>(context->funcFParams()->accept(this));
+        fps     = fp;
+    }
+    vector<SPType> fpTypes;
+    fpTypes.reserve(fps.size());
+    for (auto& p : fps) { fpTypes.emplace_back(p->fpType); }
+    FuncType funcType(this->curBType, fpTypes);
+    // ↑↑↑↑↑↑ funcType here.
 
-    LOGD("");
-    // TODO
+    // To build a function var, we need its name, FPTypes, and its returns.
+    // In a function, we need to store its instructions.
+    // And instructions were stored in BasicBlocks.
+
+    // Another question: do we need to analyze the relationship between BasicBlocks?
+    // I don't know yet.
+
+    // So I just...
+
+    // Forgive me.
+
+    // Here we add a function to the builder. At the end of HERE function,
+    g_builder->createFunction(funcType, idName);
+    // after that, the function was stored in g_builder->thisFunction
+
+    // Func Block
+
+    g_sw->isInFunc.dive(true);
     context->block()->accept(this);
+    g_sw->isInFunc.ascend();
+
+    // now we finished a function.
+    g_builder->finishFunction();
     LOGD("Exit  FuncDef");
     return 0;
 }
 
+/// changes: this->curBType
+/// \param context
+/// \return this->curBType;
 std::any Visitor::visitFuncType_(SysyParser::FuncType_Context* context)
 {
     // FINAL
@@ -365,6 +410,9 @@ std::any Visitor::visitFuncType_(SysyParser::FuncType_Context* context)
     return this->curBType;
 }
 
+/// changes: this->curBType
+/// \param context
+/// \return Void
 std::any Visitor::visitVoid(SysyParser::VoidContext* context)
 {
     // FINAL
@@ -372,39 +420,111 @@ std::any Visitor::visitVoid(SysyParser::VoidContext* context)
     return IRCtrl::IRValType::Void;
 }
 
+/// funcFParams: funcFParam (Comma funcFParam)*;
+/// \param context
+/// \return vector<SPFPVar> t;
 std::any Visitor::visitFuncFParams(SysyParser::FuncFParamsContext* context)
 {
-    return 0;
+    vector<SPFPVar> t;
+    for (auto& x : context->funcFParam()) {
+        t.emplace_back(std::any_cast<SPFPVar>(x->accept(this)));
+    }
+    return t;
 }
 
+/// funcFParam:
+//	bType Ident													# scalarParam
+//	| bType Ident Lbracket Rbracket (Lbracket exp Rbracket)*	# arrayParam;
+/// \param context
+/// \return
 std::any Visitor::visitScalarParam(SysyParser::ScalarParamContext* context)
 {
-    return 0;
+    context->bType()->accept(this);   // this will change cur->bType
+    SPType fParam;
+    switch (this->curBType) {
+    case IRValType::Int: {
+        fParam = make_shared<IntType>();
+    } break;
+    case IRValType::Float: {
+        fParam = make_shared<FloatType>();
+    } break;
+    default: break;
+    }
+    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText());
+    fp->fpType = fParam;
+    return fp;
 }
 
+/// funcFParam:
+/// 	| bType Ident Lbracket Rbracket (Lbracket exp Rbracket)*	# arrayParam;
+/// \param context
+/// \return
 std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
 {
-    return 0;
+    context->bType()->accept(this);   // this will change cur->bType
+    SPType fParam;
+
+    // deal with shape
+    vector<size_t> shape;
+    shape.emplace_back(0);
+    g_sw->isConst.dive(true);
+    for (auto& e : context->exp()) {
+        auto   a           = e->accept(this);
+        auto   number_val  = std::any_cast<std::shared_ptr<CVal>>(a);
+        auto   int_val     = std::dynamic_pointer_cast<IntCVal>(number_val);
+        auto   float_val   = std::dynamic_pointer_cast<FloatCVal>(number_val);
+        size_t thisDimSize = (int_val != nullptr) ? int_val->iVal : (size_t)float_val->fVal;
+        shape.emplace_back(thisDimSize);
+    }
+    g_sw->isConst.ascend();
+
+    fParam     = make_shared<ArrayType>(curBType, shape);
+    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText());
+    fp->fpType = fParam;
+    return fp;
+
+    // ATTENTION: I didn't make a
 }
 
+/// block: Lbrace blockItem* Rbrace;
+/// \param context
+/// \return
 std::any Visitor::visitBlock(SysyParser::BlockContext* context)
 {
-    LOGD("Enter Block");
-    g_lc->dive();
     // TODO visitBlock
-
-    LOGD("Exit  Block");
-    g_lc->ascend();
+    if (g_sw->isInFunc.get()) {
+        // In a Function.
+        g_lc->dive();
+        for (auto& x : context->blockItem()) {
+            x->accept(this);   // TODO
+        }
+        g_lc->ascend();
+    } else {
+        // Whatever in a function. Either the function itself, or the function's blocks.
+    }
     return 0;
 }
 
+/// blockItem: decl | stmt;
+/// \param context
+/// \return
 std::any Visitor::visitBlockItem(SysyParser::BlockItemContext* context)
 {
+    // FINAL
+    if (context->decl())
+        return context->decl()->accept(this);
+    else if (context->stmt())
+        return context->stmt()->accept(this);
     return 0;
 }
 
+/// stmt:
+///	lVal Assign exp Semicolon					# assign
+/// \param context
+/// \return
 std::any Visitor::visitAssign(SysyParser::AssignContext* context)
 {
+    if (g_sw->isInFunc.get()) {}
     return 0;
 }
 

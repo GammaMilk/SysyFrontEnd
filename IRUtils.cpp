@@ -146,6 +146,22 @@ std::shared_ptr<VArr> Utils::buildAnVArrFromInitList(
     }
     return r;
 }
+string Utils::valTypeToStr(IRValType _t)
+{
+    switch (_t) {
+
+    case IRValType::Func: return "function";
+    case IRValType::Int: return "i32";
+    case IRValType::Float: return "float";
+    case IRValType::Arr: return "";
+    case IRValType::Void: return "void";
+    case IRValType::Pointer: return "";
+    case IRValType::FloatArr: return "";
+    case IRValType::IntArr: return "";
+    case IRValType::Bool: return "i1";
+    case IRValType::Unknown: return "ERROR";
+    }
+}
 template<class T1, class T2>
 T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)
 {

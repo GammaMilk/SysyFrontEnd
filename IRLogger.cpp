@@ -3,6 +3,8 @@
 //
 #include "IRLogger.h"
 
+namespace IRCtrl
+{
 std::ofstream g_debug_null_out = std::ofstream("/dev/null");
 bool          g_enable_log     = true;
 std::ostream& sysy_debug()
@@ -16,3 +18,4 @@ std::ostream& sysy_debug()
     return g_debug_null_out;
 #endif
 }
+}   // namespace IRCtrl

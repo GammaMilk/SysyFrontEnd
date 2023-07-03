@@ -28,6 +28,9 @@ public:
     static std::shared_ptr<VArr>
     buildAnVArrFromInitList(const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape);
 
+    static string valTypeToStr(IRValType _t);
+
+
 private:
     template<class T1, class T2>
     static T1 T1OP(T1 v1, T2 v2, IRValOp op);

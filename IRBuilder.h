@@ -24,21 +24,26 @@ public:
 
     explicit IRBuilder(const std::string& filename);
     void setFilename(const std::string& filename);
+    void createFunction(IRCtrl::FuncType& type1, const string& name1);
+    void finishFunction();
     void build(std::ostream& os);
 
-    int getNewLabel();
+    int               getNewLabel();
     [[nodiscard]] int getLastLabel() const;
 
-    std::string build();
-    std::unique_ptr<IRProgram> program;
+    std::string                 build();
+    std::shared_ptr<IRFunction> thisFunction;
 
 
 private:
     // Here stmts only means other stmt(other than function, var, const)
-    std::vector<std::string>  _stmts;
-    std::string               _filename;
-    bool                      _inGlobalScope = true;
-    int                       _label         = 100;
+    std::vector<std::string>   _stmts;
+    std::string                _filename;
+    int                        _label = 100;
+    std::shared_ptr<IRProgram> program;
+
+public:
+    const shared_ptr<IRProgram>& getProgram() const;
 
 
 public:

@@ -34,6 +34,12 @@ public:
 
     void dive() override { _stack.push(_cur); }
 
+    void dive(bool x)
+    {
+        dive();
+        _cur = x;
+    }
+
     void set(bool t) override { _cur = t; }
 
     void ascend() override { _stack.pop(); }
@@ -49,6 +55,7 @@ class IRGlobalSwitch
 {
 public:
     IRBoolSwitch isConst;
+    IRBoolSwitch isInFunc;
 };
 
 }   // namespace IRCtrl

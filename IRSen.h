@@ -66,19 +66,15 @@ public:
     explicit IRSen(string name)
         : name(std::move(name))
     {
-        _op = IROp::UNKNOWN;
     }
     std::string         name;
     virtual std::string toString() = 0;
 
 protected:
-    IROp _op;
-};
+    IROp _op = IROp::UNKNOWN;
 
-class VarSen : public IRSen
-{
 public:
-    virtual std::string toString() override;
+    [[nodiscard]] IROp getOp() const;
 };
 
 class ConstSen : public IRSen
@@ -100,13 +96,27 @@ public:
     string toString() override;
 };
 
-class LocalValDeclSen : public IRSen
+class LocalSen : public IRSen
 {
+
 public:
-    // TODO
+    string toString() override;
 };
 
+class AllocaSen : public LocalSen
+{
+    AllocaSen(const string& lv, IRType& irType1)
+        : irType(irType1)
+    {
+        _op = IROp::ALLOCA;
+    }
 
+protected:
+    IRType& irType;
+
+public:
+    string toString() override;
+};
 
 }   // namespace IRCtrl
 

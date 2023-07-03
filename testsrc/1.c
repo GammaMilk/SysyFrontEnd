@@ -41,7 +41,7 @@ float floatFunc()
 
 int main()
 {
-    int b;
-    b = func(a);
-    return b;
+    int b;         // decl
+    b = func(a);   // stmt
+    return b;      // stmt
 }

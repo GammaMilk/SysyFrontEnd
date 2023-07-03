@@ -22,3 +22,15 @@
 @dd = global float 0x0
 @d = global float [2 x float] [float 0x3ff19999a0000000, float 0x40019999a0000000]
 @e = global float [12 x float] zeroinitializer
+define i32 @func(i32 %arg_0) {
+
+}
+define void @VoidFunc() {
+
+}
+define float @floatFunc() {
+
+}
+define i32 @main() {
+
+}

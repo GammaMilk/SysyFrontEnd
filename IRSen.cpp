@@ -5,19 +5,16 @@
 #include "IRSen.h"
 
 
+namespace IRCtrl
+{
 
-std::string IRCtrl::ConstSen::toString()
+string ConstSen::toString()
 {
     return {};
 }
 
-std::string IRCtrl::VarSen::toString()
-{
-    return {};
-}
 
-
-string IRCtrl::GlobalValDeclSen::toString()
+string GlobalValDeclSen::toString()
 {
     stringstream ss;
     ss << "@" << this->val->name << " = ";
@@ -56,3 +53,17 @@ string IRCtrl::GlobalValDeclSen::toString()
     }
     return ss.str();
 }
+IROp IRSen::getOp() const
+{
+    return _op;
+}
+string LocalSen::toString()
+{
+    return std::string();
+}
+string AllocaSen::toString()
+{
+    return "%" + name + " = alloca " + irType.toString();
+}
+
+}   // namespace IRCtrl

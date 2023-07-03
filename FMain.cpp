@@ -22,6 +22,7 @@
 #include "tree/ParseTree.h"
 #include "IRLogger.h"
 #include "IRBuilder.h"
+#include "IRGlobal.h"
 
 using namespace antlrcpp;
 using namespace antlr4;
@@ -34,7 +35,6 @@ constexpr bool      is_debug    = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
 
-extern std::shared_ptr<IRCtrl::IRBuilder> g_builder;
 
 int main(int, const char**)
 {
@@ -73,8 +73,8 @@ int main(int, const char**)
 
     //    outfile << tree->toStringTree(&parser, true) << endl;
 
-    g_builder->setFilename(sourceFileName);
-    g_builder->build(outfile);
+    IRCtrl::g_builder->setFilename(sourceFileName);
+    IRCtrl::g_builder->build(outfile);
 
 
     outfile.close();

@@ -18,7 +18,7 @@ class IRVal : public IPrintable
 public:
     std::string name;
     IRValType   type;
-    SPType      advancedType;
+    SPType      advancedType;   // Only function and array has advancedType
 
     IRVal()
         : name(std::string(""))
@@ -101,6 +101,8 @@ public:
     void   unary() override;
     string toString() override;
 };
+
+
 
 class FloatCVal : public CVal
 {
@@ -189,6 +191,22 @@ public:
 
     string toString() override;
 };
+class BoolVal : public IntVal
+{
+    int iVal{};
+    explicit BoolVal(const string& name1)
+        : IntVal(name1)
+    {
+        type = IRValType::Bool;
+    }
+    BoolVal(const string& name1, int val)
+        : IntVal(name1)
+    {
+        iVal = val;
+    }
+
+    string toString() override;
+};
 class FloatVal : public VVal
 {
 public:
@@ -217,7 +235,7 @@ public:
         type    = IRValType::Arr;
     }
 
-    virtual string toString() override;
+    string toString() override;
 
     std::deque<size_t>       _shape;
     bool                     isZero = false;
@@ -228,6 +246,22 @@ public:
 protected:
     virtual string shapeString();
 };
+
+class LocalVar : public IRVal
+{
+    int id = -1;
+};
+using SPLocalVar = shared_ptr<LocalVar>;
+
+class FPVar : public LocalVar
+{
+public:
+    explicit FPVar(const string& name1) { name = name1; }
+    string toString() override;
+    SPType fpType;
+};
+using SPFPVar = shared_ptr<FPVar>;
+
 
 }   // namespace IRCtrl
 #endif   // SYSYLEX_IRVAL_H

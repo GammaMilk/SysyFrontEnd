@@ -157,4 +157,21 @@ string VArr::shapeString()
     for (auto& x : this->_shape) { ss << "]"; }
     return ss.str();
 }
+string FPVar::toString()
+{
+    stringstream ss;
+    auto         pType = this->fpType->type;
+    if (pType == IRValType::Float) {
+        ss << "float";
+    } else if (pType == IRValType::Int) {
+        ss << "i32";
+    } else if (pType == IRValType::Arr) {
+        auto   fpArrType   = std::dynamic_pointer_cast<ArrayType>(this->fpType);
+        string elemTypeStr = (fpArrType->innerType == IRValType::Float) ? "float" : "i32";
+    }
+}
+string BoolVal::toString()
+{
+    return (iVal == 0) ? "0" : "1";
+}
 }   // namespace IRCtrl

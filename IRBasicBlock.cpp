@@ -3,3 +3,7 @@
 //
 
 #include "IRBasicBlock.h"
+namespace IRCtrl
+{
+
+}
