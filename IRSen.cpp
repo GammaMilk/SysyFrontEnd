@@ -31,16 +31,26 @@ string GlobalValDeclSen::toString()
         auto x = std::dynamic_pointer_cast<CArr>(this->val);
         if (x) {
             if (x->containedType == IRValType::Float) {
-                ss << " float " << this->val->toString();
+
+
+
+
+
+
+
+
+
+
+                ss << " " << this->val->toString();
             } else {
-                ss << " i32 " << this->val->toString();
+                ss << " " << this->val->toString();
             }
         } else {
             auto y = std::dynamic_pointer_cast<VArr>(this->val);
             if (y->containedType == IRValType::Float) {
-                ss << " float " << this->val->toString();
+                ss << " " << this->val->toString();
             } else {
-                ss << " i32 " << this->val->toString();
+                ss << " " << this->val->toString();
             }
         }
 
