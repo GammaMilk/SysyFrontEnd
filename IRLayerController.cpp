@@ -61,4 +61,8 @@ void IRCtrl::IRLayerController::push(const std::shared_ptr<IRVal>& val)
 {
     this->_layers[_layers.size() - 1].symbols.insert(std::make_pair(val->name, val));
 }
+std::shared_ptr<LocalVar> IRLayerController::queryLocal(const string& symbol_name, bool recursively)
+{
+    return std::dynamic_pointer_cast<LocalVar>(this->query(symbol_name, recursively));
+}
 }   // namespace IRCtrl

@@ -247,16 +247,61 @@ protected:
     virtual string shapeString();
 };
 
+// in-function vars. not global.
 class LocalVar : public IRVal
 {
-    int id = -1;
+public:
+    string id = "-1";
+    explicit LocalVar(string _id)
+        : id(std::move(_id))
+    {
+    }
 };
 using SPLocalVar = shared_ptr<LocalVar>;
 
+class LocalInt : public LocalVar
+{
+public:
+    explicit LocalInt(const string& _id)
+        : LocalVar(_id)
+    {
+        type = IRValType::Int;
+    }
+    LocalInt(const string& _id, const string& _name)
+        : LocalVar(_id)
+    {
+        type = IRValType::Int;
+        name = _name;
+    }
+    string toString() override;
+};
+
+class LocalFloat : public LocalVar
+{
+public:
+    explicit LocalFloat(const string& _id)
+        : LocalVar(_id)
+    {
+        type = IRValType::Float;
+    }
+    LocalFloat(const string& _id, const string& _name)
+        : LocalVar(_id)
+    {
+        type = IRValType::Int;
+        name = _name;
+    }
+    string toString() override;
+};
+
+/// the var of a function's params
 class FPVar : public LocalVar
 {
 public:
-    explicit FPVar(const string& name1) { name = name1; }
+    explicit FPVar(const string& id, const string& name1)
+        : LocalVar(id)
+    {
+        name = name1;
+    }
     string toString() override;
     SPType fpType;
 };

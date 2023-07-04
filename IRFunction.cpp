@@ -37,6 +37,11 @@ string IRFunction::toString()
     ss << ") {\n";
 
     // TODO func BBs
+    for (auto& b : bbs) {
+        ss << b->name << ":\n";
+        for (auto& s : b->instructions) { ss << "    " << s->toString() << "\n"; }
+        ss << "\n";
+    }
 
     ss << "\n}";
     return ss.str();

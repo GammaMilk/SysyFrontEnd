@@ -16,12 +16,19 @@ namespace IRCtrl
 class IRBasicBlock
 {
 public:
-    string           name;
-    vector<LocalSen> instructions;
+    string             name;
+    vector<UPLocalSen> instructions;
+    IRBasicBlock*      parent = nullptr;
     explicit IRBasicBlock(string name1)
         : name(std::move(name1))
     {
     }
+    explicit IRBasicBlock(string name1, IRBasicBlock* _parent)
+        : name(std::move(name1))
+        , parent(_parent)
+    {
+    }
+    void add(UPLocalSen sen);
 };
 
 using SPBasicBlock = std::shared_ptr<IRBasicBlock>;

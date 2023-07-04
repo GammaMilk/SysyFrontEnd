@@ -20,16 +20,17 @@ const float CONV1 = 233, CONV2 = 0xfff;
 
 const int   cccccccc = 2 * 31 * 1847;
 const float dddddddd = (cccccccc * 2) / (31 * 1847) / 2;
+const int   c[2][3]  = {{}, {4, 5, 6}};
 
-float     bb = 2.3, cc = 3.3;
-float     dd;
-const int c[2][3]  = {{}, {4, 5, 6}};
-float     d[1 * 2] = {1.1, 2.2};
-float     e[12];
+float bb = 2.3, cc = 3.3;
+float dd;
+float d[1 * 2] = {1.1, 2.2};
+float e[12];
 
-int func(int p)
+int func(int p[][58]])
 {
     p = p - 1;
+    int bbbbb[10];
     return p;
 }
 

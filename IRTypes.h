@@ -122,6 +122,11 @@ public:
     IRType targetType;
 };
 
+/// make an IRType from IRValType. Must check nullptr.
+/// \param _t IRValType
+/// \return `nullptr` or target type.
+SPType makeType(IRValType _t);
+
 }   // namespace IRCtrl
 
 #endif   // SYSYLEX_IRTYPES_H

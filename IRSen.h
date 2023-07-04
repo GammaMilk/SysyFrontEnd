@@ -102,17 +102,22 @@ class LocalSen : public IRSen
 public:
     string toString() override;
 };
+using UPLocalSen = unique_ptr<LocalSen>;
+using SPLocalSen = shared_ptr<LocalSen>;
 
 class AllocaSen : public LocalSen
 {
-    AllocaSen(const string& lv, IRType& irType1)
-        : irType(irType1)
+public:
+    AllocaSen(const string& lv, SPType irType1)
+        : irType(std::move(irType1))
+        , m_lv((lv))
     {
         _op = IROp::ALLOCA;
     }
 
 protected:
-    IRType& irType;
+    SPType irType;
+    string m_lv;
 
 public:
     string toString() override;

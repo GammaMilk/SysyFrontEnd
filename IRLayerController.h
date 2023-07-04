@@ -26,13 +26,15 @@ public:
 
     /**
      * Push a sentence into the symbol table.
-     * @param val
+     * @param val the target val
      */
     void push(const std::shared_ptr<IRVal>& val);
 
     std::shared_ptr<IRVal> query(const std::shared_ptr<IRVal>& val, bool recursively = true);
 
     std::shared_ptr<IRVal> query(const std::string& symbol_name, bool recursively = true);
+
+    std::shared_ptr<LocalVar> queryLocal(const std::string& symbol_name, bool recursively = true);
 
 private:
     std::vector<IRLayer> _layers;

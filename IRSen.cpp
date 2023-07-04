@@ -31,16 +31,6 @@ string GlobalValDeclSen::toString()
         auto x = std::dynamic_pointer_cast<CArr>(this->val);
         if (x) {
             if (x->containedType == IRValType::Float) {
-
-
-
-
-
-
-
-
-
-
                 ss << " " << this->val->toString();
             } else {
                 ss << " " << this->val->toString();
@@ -73,7 +63,8 @@ string LocalSen::toString()
 }
 string AllocaSen::toString()
 {
-    return "%" + name + " = alloca " + irType.toString();
+    // 之所以这里没有使用%百分号，是因为我需要统一名称。名称在之前生成对象时保证%或@
+    return m_lv + " = alloca " + irType->toString();
 }
 
 }   // namespace IRCtrl

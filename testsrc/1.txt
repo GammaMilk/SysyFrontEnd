@@ -22,15 +22,26 @@
 @dd = global float 0x0
 @d = global [2 x float] [float 0x3ff19999a0000000, float 0x40019999a0000000]
 @e = global [12 x float] zeroinitializer
-define i32 @func(i32 %arg_0) {
+define i32 @func([58 x i32]* %arg_0) {
+LEntry:
+    %arg_0 = alloca [58 x i32]*
+    %101 = alloca [10 x i32]
+
 
 }
 define void @VoidFunc() {
+LEntry:
+
 
 }
 define float @floatFunc() {
+LEntry:
+
 
 }
 define i32 @main() {
+LEntry:
+    %102 = alloca i32
+
 
 }

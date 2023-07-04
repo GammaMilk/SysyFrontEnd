@@ -10,7 +10,7 @@ bool          g_enable_log     = true;
 std::ostream& sysy_debug()
 {
 #ifdef _DEBUG
-    if (g_enable_log)
+    if (true)
         return std::cerr;
     else
         return g_debug_null_out;

@@ -63,13 +63,17 @@ std::any Visitor::visitDecl(SysyParser::DeclContext* context)
     return 0;
 }
 
+/// constDecl: Const bType constDef (Comma constDef)* Semicolon;
+/// \param context
+/// \return
 std::any Visitor::visitConstDecl(SysyParser::ConstDeclContext* context)
 {
     // Set this layer to const.
     g_sw->isConst.dive();
     g_sw->isConst.set(true);
+    context->bType()->accept(this);   // this will change curBType;
     for (auto& x : context->constDef()) { x->accept(this); }
-    g_sw->isConst.ascend();   // resume
+    g_sw->isConst.ascend();           // resume
     return 0;
 }
 
@@ -217,11 +221,32 @@ std::any Visitor::visitVarDecl(SysyParser::VarDeclContext* context)
 std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
 {
     g_enable_log = false;
-    LOGD("Enter VisitVarDef");
 
 
-    IRCtrl::IRValType type   = this->curBType;
-    string            idName = context->Ident()->getText();
+    // var's type
+    IRCtrl::IRValType type = this->curBType;
+
+    // idName
+    string idName = context->Ident()->getText();
+    LOGD("Enter VisitVarDef, id == " << idName);
+
+    // get the init val if exists
+    float fInit = 0;
+    int   iInit = 0;
+    if (context->initVal() != nullptr && context->exp().empty()) {
+        g_sw->isConst.dive(true);
+        auto initVal  = std::any_cast<shared_ptr<CVal>>(context->initVal()->accept(this));
+        auto fValInit = std::dynamic_pointer_cast<FloatCVal>(initVal);
+        auto iValInit = std::dynamic_pointer_cast<IntCVal>(initVal);
+        if (fValInit != nullptr) {
+            fInit = fValInit->fVal;
+            iInit = (int)fInit;
+        } else {
+            iInit = iValInit->iVal;
+            fInit = (float)iInit;
+        }
+        g_sw->isConst.ascend();
+    }
     if (g_lc->isInGlobal()) {
         // Only in Global, the initList can be initialized as const numbers.
         g_sw->isConst.dive();
@@ -231,21 +256,6 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
 
             // float/int a (= ?)*
 
-            // get the init val if exists
-            float fInit = 0;
-            int   iInit = 0;
-            if (context->initVal() != nullptr) {
-                auto initVal  = std::any_cast<shared_ptr<CVal>>(context->initVal()->accept(this));
-                auto fValInit = std::dynamic_pointer_cast<FloatCVal>(initVal);
-                auto iValInit = std::dynamic_pointer_cast<IntCVal>(initVal);
-                if (fValInit != nullptr) {
-                    fInit = fValInit->fVal;
-                    iInit = (int)fInit;
-                } else {
-                    iInit = iValInit->iVal;
-                    fInit = (float)iInit;
-                }
-            }
 
             // make a object and push it into LayerController and Builder
             if (type == IRCtrl::IRValType::Float) {
@@ -302,6 +312,73 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
         g_sw->isConst.ascend();
     } else {
         // TODO local define like local int/float id([])* (= ?)?
+        g_enable_log = true;
+        LOGD("Local Var name == " << idName << ",  type = " << Utils::valTypeToStr(type));
+        int           newLabel  = g_builder->getNewLabel();
+        const string& newLabelS = "%" + std::to_string(newLabel);
+        if (context->exp().empty()) {
+
+            // local float/int a (= ?)*
+
+            // make a object and push it into LayerController and Builder
+            if (type == IRCtrl::IRValType::Float) {
+                auto vVal = make_shared<LocalFloat>(newLabelS, idName);
+                if (context->initVal() != nullptr) {
+                    // local float has initialized
+                    // TODO we need a "STORE" sentence.
+                }
+                g_lc->push(vVal);
+            } else {
+                auto vVal = make_shared<LocalInt>(idName);
+                if (context->initVal() != nullptr) {
+                    // local float has initialized
+                    // TODO we need a "STORE" sentence.
+                }
+                g_lc->push(vVal);
+            }
+            auto sen = make_unique<AllocaSen>(newLabelS, makeType(type));
+            g_builder->addIntoCurBB(std::move(sen));
+        } else {
+
+            // local Array
+            // float/int a[][][][] (= ?)?
+
+            // Array 1 : deal with shape
+            g_sw->isConst.dive(true);
+            std::deque<size_t> shape;
+            for (auto& e : context->exp()) {
+                auto   a           = e->accept(this);
+                auto   number_val  = std::any_cast<std::shared_ptr<CVal>>(a);
+                auto   int_val     = std::dynamic_pointer_cast<IntCVal>(number_val);
+                auto   float_val   = std::dynamic_pointer_cast<FloatCVal>(number_val);
+                size_t thisDimSize = (int_val != nullptr) ? int_val->iVal : (size_t)float_val->fVal;
+                shape.emplace_back(thisDimSize);
+            }
+            g_sw->isConst.ascend();
+
+            // Array 2 : deal with init data
+            shared_ptr<InitListVal> iList;
+            if (context->initVal() == nullptr) {
+                // has no initVal. just return a non-initialized VArr. just so.
+                auto emptyIList = make_shared<InitListVal>();
+                iList           = emptyIList;
+            } else {
+                auto iList_a = context->initVal()->accept(this);
+                iList        = any_cast<shared_ptr<InitListVal>>(iList_a);
+            }
+
+            iList->contained = this->curBType;
+            auto thisArr     = Utils::buildAnVArrFromInitList(iList, shape);
+            thisArr->name    = idName;
+            g_lc->push(thisArr);
+
+            auto arrType =
+                make_shared<ArrayType>(curBType, std::vector<size_t>(shape.begin(), shape.end()));
+            auto allocaSen = make_unique<AllocaSen>(newLabelS, arrType);
+            g_builder->addIntoCurBB(std::move(allocaSen));
+            // TODO store constants into that array.
+        }
+        g_enable_log = false;
     }
 
     LOGD("Exit VisitVarDef");
@@ -340,9 +417,11 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
 std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
 {
     g_enable_log = true;
-    LOGD("Enter FuncDef");
     context->funcType()->accept(this);   // this operation will change this->curBType
 
+    // Func name
+    string idName = context->Ident()->getText();
+    LOGD("Enter FuncDef, name==" << idName);
     // Only for log
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -353,8 +432,6 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     }
 #pragma clang diagnostic pop
 
-    // Func name
-    string idName = context->Ident()->getText();
 
     // IRFunction signature
     // IRFunction fps
@@ -385,9 +462,15 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     // after that, the function was stored in g_builder->thisFunction
 
     // Func Block
-
     g_sw->isInFunc.dive(true);
+    g_lc->dive();
+    // operating on args.
+    for (int l = 0; l < fpTypes.size(); l++) {
+        auto I1lII1llI10Oll01O = make_unique<AllocaSen>("%arg_" + std::to_string(l), fpTypes[l]);
+        g_builder->addIntoCurBB(std::move(I1lII1llI10Oll01O));
+    }
     context->block()->accept(this);
+    g_lc->ascend();
     g_sw->isInFunc.ascend();
 
     // now we finished a function.
@@ -426,8 +509,11 @@ std::any Visitor::visitVoid(SysyParser::VoidContext* context)
 std::any Visitor::visitFuncFParams(SysyParser::FuncFParamsContext* context)
 {
     vector<SPFPVar> t;
+    int             argN = 0;
     for (auto& x : context->funcFParam()) {
-        t.emplace_back(std::any_cast<SPFPVar>(x->accept(this)));
+        auto v = std::any_cast<SPFPVar>(x->accept(this));
+        v->id  = "arg_" + std::to_string(argN++);
+        t.emplace_back(v);
     }
     return t;
 }
@@ -450,7 +536,7 @@ std::any Visitor::visitScalarParam(SysyParser::ScalarParamContext* context)
     } break;
     default: break;
     }
-    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText());
+    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText(), "");
     fp->fpType = fParam;
     return fp;
 }
@@ -479,7 +565,7 @@ std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
     g_sw->isConst.ascend();
 
     fParam     = make_shared<ArrayType>(curBType, shape);
-    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText());
+    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText(), "");
     fp->fpType = fParam;
     return fp;
 
@@ -491,17 +577,13 @@ std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
 /// \return
 std::any Visitor::visitBlock(SysyParser::BlockContext* context)
 {
+    if (!g_sw->isInFunc.get()) { g_lc->dive(); }
+    // In a Function.
     // TODO visitBlock
-    if (g_sw->isInFunc.get()) {
-        // In a Function.
-        g_lc->dive();
-        for (auto& x : context->blockItem()) {
-            x->accept(this);   // TODO
-        }
-        g_lc->ascend();
-    } else {
-        // Whatever in a function. Either the function itself, or the function's blocks.
+    for (auto& x : context->blockItem()) {
+        x->accept(this);   // TODO
     }
+    if (!g_sw->isInFunc.get()) { g_lc->ascend(); }
     return 0;
 }
 
@@ -583,8 +665,8 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
         // Const, we need to actually calc the true value
         string                   name  = context->Ident()->getText();
         const shared_ptr<IRVal>& query = g_lc->query(name, false);
-        auto                     cval  = std::dynamic_pointer_cast<CVal>(query);
-        return cval;
+        auto                     val   = std::dynamic_pointer_cast<CVal>(query);
+        return val;
     } else {
         // Non const, we need generate some code to store the result.
         // TODO.
@@ -601,7 +683,7 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
 /// \return
 std::any Visitor::visitPrimaryExp_(SysyParser::PrimaryExp_Context* context)
 {
-    if (g_lc->isInGlobal()) {
+    if (g_sw->isConst.get()) {
         if (context->exp()) {
             return context->exp()->accept(this);
         } else {
@@ -785,6 +867,7 @@ std::any Visitor::visitMul(SysyParser::MulContext* context)
         return res;
     } else {
         //        TODO
+        LOGD("VisitMul Not Const!!!!!");
     }
     return 0;
 }

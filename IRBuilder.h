@@ -27,12 +27,13 @@ public:
     void createFunction(IRCtrl::FuncType& type1, const string& name1);
     void finishFunction();
     void build(std::ostream& os);
+    void addIntoCurBB(unique_ptr<LocalSen> sen);
 
     int               getNewLabel();
     [[nodiscard]] int getLastLabel() const;
 
-    std::string                 build();
-    std::shared_ptr<IRFunction> thisFunction;
+    std::string                                 build();
+    [[nodiscard]] const shared_ptr<IRFunction>& getFunction() const;
 
 
 private:
@@ -40,7 +41,8 @@ private:
     std::vector<std::string>   _stmts;
     std::string                _filename;
     int                        _label = 100;
-    std::shared_ptr<IRProgram> program;
+    std::shared_ptr<IRProgram>  program;
+    std::shared_ptr<IRFunction> thisFunction;
 
 public:
     const shared_ptr<IRProgram>& getProgram() const;

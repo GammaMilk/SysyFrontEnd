@@ -3,6 +3,7 @@
 //
 
 #include "IRVal.h"
+#include "IRLogger.h"
 
 #include <utility>
 #include <ios>
@@ -80,7 +81,7 @@ string CArr::toString()
     s.pop_back();
     s.pop_back();
     s += "]";
-
+    LOGD(s);
     return s;
 }
 string CArr::shapeString()
@@ -173,5 +174,13 @@ string FPVar::toString()
 string BoolVal::toString()
 {
     return (iVal == 0) ? "0" : "1";
+}
+string LocalInt::toString()
+{
+    return std::string();
+}
+string LocalFloat::toString()
+{
+    return std::string();
 }
 }   // namespace IRCtrl

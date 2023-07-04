@@ -7,6 +7,8 @@
 #include <utility>
 #include <ostream>
 #include <sstream>
+namespace IRCtrl
+{
 
 IRCtrl::IRBuilder::IRBuilder()
 {
@@ -93,3 +95,13 @@ const shared_ptr<IRCtrl::IRProgram>& IRCtrl::IRBuilder::getProgram() const
 {
     return program;
 }
+const shared_ptr<IRFunction>& IRCtrl::IRBuilder::getFunction() const
+{
+    return thisFunction;
+}
+void IRBuilder::addIntoCurBB(UPLocalSen sen)
+{
+    this->thisFunction->curBB->add(std::move(sen));
+}
+
+}   // namespace IRCtrl
