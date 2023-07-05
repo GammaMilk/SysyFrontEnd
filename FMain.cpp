@@ -36,21 +36,49 @@ static std::ostream null_stream = std::ostream(nullptr);
 
 
 
-int main(int, const char**)
+int main(int argc, const char** argv)
 {
-    std::ifstream file;
-    std::ofstream outfile;
 
-    auto sourceFileName = "../testsrc/1.c";
+    std::string inputFile;
+    std::string outputFile;
+    std::string optimizationLevel;
 
-    outfile.open("../testsrc/1.txt", std::ios::out);
-    file.open(sourceFileName, std::ios::in);
-    if (!file) {
-        cout << "no such file" << endl;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+
+        if (arg == "-S") {
+            // 处理 -S 参数
+        } else if (arg == "-o") {
+            if (i + 1 < argc) {
+                outputFile = argv[i + 1];
+                ++i;   // 跳过下一个参数
+            } else {
+                std::cerr << "缺少输出文件名" << std::endl;
+                return 1;
+            }
+        } else if (arg == "-O1") {
+            // 处理 -O1 参数
+        } else {
+            inputFile = arg;
+        }
+    }
+
+    // 处理缺省参数
+    if (inputFile.empty()) { inputFile = "../testsrc/1.c"; }
+    if (outputFile.empty()) { outputFile = "../testsrc/1.txt"; }
+    std::ifstream inputStream;
+    std::ofstream outputStream;
+
+    auto sourceFileName = inputFile;
+
+    outputStream.open(outputFile, std::ios::out);
+    inputStream.open(sourceFileName, std::ios::in);
+    if (!inputStream) {
+        cout << "no such inputStream" << endl;
         return 0;
     }
     LOGD("File Fine.");
-    ANTLRInputStream  input(file);
+    ANTLRInputStream  input(inputStream);
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 
@@ -71,12 +99,44 @@ int main(int, const char**)
 
     cout << endl;
 
-    //    outfile << tree->toStringTree(&parser, true) << endl;
+    //    outputStream << tree->toStringTree(&parser, true) << endl;
 
+    stringstream irStream;   // IR stream.
     IRCtrl::g_builder->setFilename(sourceFileName);
-    IRCtrl::g_builder->build(outfile);
+    IRCtrl::g_builder->build(irStream);
 
+    // TODO: put irStream into backend
 
-    outfile.close();
+    // Warning: the code below is only for platform test.
+    // DO NOT just copy and paste.
+    string asm00 = R"(.text
+.syntax unified
+.fpu	neon
+.file	"00_main.sy"
+.globl	main                            @ -- Begin function main
+.p2align	2
+.type	main,%function
+.code	32                              @ @main
+main:
+.fnstart
+@ %bb.0:
+.pad	#4
+sub	sp, sp, #4
+movw	r0, #0
+str	r0, [sp]
+movw	r0, #3
+add	sp, sp, #4
+bx	lr
+.Lfunc_end0:
+.size	main, .Lfunc_end0-main
+.cantunwind
+.fnend
+                                    @ -- End function
+.ident	"(built by Brecht Sanders) clang version 16.0.2"
+.section	".note.GNU-stack","",%progbits
+.eabi_attribute	30, 6	@ Tag_ABI_optimization_goals
+)";
+    outputStream << asm00;
+    outputStream.close();
     return 0;
 }
