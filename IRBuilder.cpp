@@ -71,10 +71,6 @@ int IRCtrl::IRBuilder::getNewLabel()
     return _label;
 }
 
-int IRCtrl::IRBuilder::getLastLabel() const
-{
-    return _label;
-}
 
 
 void IRCtrl::IRBuilder::setFilename(const std::string& filename)
@@ -103,5 +99,23 @@ void IRBuilder::addIntoCurBB(UPLocalSen sen)
 {
     this->thisFunction->curBB->add(std::move(sen));
 }
+
+    string IRBuilder::getNewLocalLabelStr() {
+        return "%" + std::to_string(this->getNewLabel());
+    }
+
+    int IRBuilder::getLastLabel() const {
+        return this->_label;
+    }
+
+    /// contains "%"
+    /// \return
+    string IRBuilder::getLastLocalLabelStr() {
+        return "%" + std::to_string(getLastLabel());
+    }
+
+    const unique_ptr<LocalSen> &IRBuilder::getLastSen() const {
+        return getFunction()->curBB->instructions.back();
+    }
 
 }   // namespace IRCtrl

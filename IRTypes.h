@@ -19,6 +19,12 @@ using std::string;
 using std::stringstream;
 using std::unique_ptr;
 using std::vector;
+using std::dynamic_pointer_cast;
+
+#define MS make_shared
+#define MU make_unique
+
+#define ACS(_ST, _TARG) std::any_cast<shared_ptr< _ST >>((_TARG))
 
 namespace IRCtrl
 {
@@ -76,6 +82,7 @@ public:
     }
     string toString() override;
 };
+
 class ArrayType : public IRType
 {
 public:
@@ -114,18 +121,24 @@ public:
 class PointerType : public IRType
 {
 public:
-    explicit PointerType(IRType target)
-        : IRType(IRValType::Pointer)
-        , targetType(target)
+    explicit PointerType(SPType target)
+        : IRType(IRValType::Pointer), targetType(std::move(target))
     {
     }
-    IRType targetType;
+
+    SPType targetType;
+
+    string toString() override;
 };
 
 /// make an IRType from IRValType. Must check nullptr.
 /// \param _t IRValType
 /// \return `nullptr` or target type.
 SPType makeType(IRValType _t);
+
+    SPType makePointer(const SPType &_t, size_t stars);
+
+    SPType makePointer(const SPType &_t);
 
 }   // namespace IRCtrl
 

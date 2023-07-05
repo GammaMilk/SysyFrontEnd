@@ -101,6 +101,9 @@ class LocalSen : public IRSen
 
 public:
     string toString() override;
+
+    shared_ptr<IRType> _retType = makeType(IRValType::Void);
+    string _label; // -> %3 <- = addi %2, 1
 };
 using UPLocalSen = unique_ptr<LocalSen>;
 using SPLocalSen = shared_ptr<LocalSen>;
@@ -108,11 +111,11 @@ using SPLocalSen = shared_ptr<LocalSen>;
 class AllocaSen : public LocalSen
 {
 public:
-    AllocaSen(const string& lv, SPType irType1)
-        : irType(std::move(irType1))
-        , m_lv((lv))
+    AllocaSen(string lv, SPType irType1)
+        : irType(std::move(irType1)), m_lv(std::move((lv)))
     {
         _op = IROp::ALLOCA;
+        _retType = makePointer(irType);
     }
 
 protected:
@@ -122,6 +125,66 @@ protected:
 public:
     string toString() override;
 };
+
+    class ReturnSen : public LocalSen {
+    public:
+        ReturnSen(string lv, SPType irType1)
+                : irType(std::move(irType1)), m_lv(std::move((lv))) {
+            _op = IROp::RET;
+    }
+
+protected:
+    SPType irType;
+    string m_lv;
+
+public:
+    string toString() override;
+};
+
+    class LoadSen : public LocalSen {
+    public:
+        LoadSen(string retLabel, SPType ty, string sourceName_) :
+                sourceName(std::move(sourceName_)), irType(std::move(ty)) {
+            _label = std::move(retLabel);
+            _retType = irType;
+        }
+
+        string toString() override;
+
+    protected:
+        SPType irType;
+        string sourceName;
+
+    };
+
+    class StoreSen : public LocalSen {
+    public:
+        StoreSen(string targetLabel, SPType ty, string sourceName_) :
+                sourceName(std::move(sourceName_)), irType(std::move(ty)) {
+            _label = std::move(targetLabel);
+        }
+
+        string toString() override;
+
+    protected:
+        SPType irType;
+        string sourceName;
+
+    };
+
+/// %v16 = sitofp i32 5 to float
+    class SiToFpSen : public LocalSen {
+        SiToFpSen(string retLabel, SPType ty, string sourceName_) :
+                sourceName(std::move(sourceName_)) {
+            _label = std::move(retLabel);
+            _retType = std::move(ty);
+        }
+
+        string toString() override;
+
+    protected:
+        string sourceName;
+    };
 
 }   // namespace IRCtrl
 

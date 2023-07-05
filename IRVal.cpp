@@ -171,11 +171,17 @@ string FPVar::toString()
         string elemTypeStr = (fpArrType->innerType == IRValType::Float) ? "float" : "i32";
     }
 }
-string BoolVal::toString()
-{
-    return (iVal == 0) ? "0" : "1";
-}
-string LocalInt::toString()
+
+    const SPType &FPVar::getFpType() const {
+        return fpType;
+    }
+
+    void FPVar::setFpType(const SPType &fpType) {
+        advancedType = fpType;
+        FPVar::fpType = fpType;
+    }
+
+    string LocalInt::toString()
 {
     return std::string();
 }
@@ -183,4 +189,16 @@ string LocalFloat::toString()
 {
     return std::string();
 }
+
+    string LocalBool::toString() {
+        return LocalInt::toString();
+    }
+
+    SPType IRVal::getTrueAdvType() const {
+        if (this->advancedType != nullptr) {
+            return this->advancedType;
+        } else {
+            return makeType(this->type);
+        }
+    }
 }   // namespace IRCtrl

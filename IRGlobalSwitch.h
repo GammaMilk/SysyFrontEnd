@@ -6,6 +6,7 @@
 #define SYSYLEX_IRGLOBALSWITCH_H
 
 #include <stack>
+#include <utility>
 
 namespace IRCtrl
 {
@@ -25,14 +26,26 @@ public:
 class IRBoolSwitch : public IRSwitch<bool>
 {
 public:
-    IRBoolSwitch() = default;
+    explicit IRBoolSwitch(string name) : _name(std::move(name)) {
+        LOGD("Constructed IRBoolSwitch");
+    };
 
     explicit IRBoolSwitch(bool init)
         : _cur(init)
     {
     }
 
-    void dive() override { _stack.push(_cur); }
+    void dive() override {
+        if (_name == "isConst") {
+            LOGD("CONST DIVE " << _stack.size() << _name);
+
+        }
+        _stack.push(_cur);
+        if (_name == "isConst") {
+            LOGD("CONST DIVE" << _stack.size());
+        }
+
+    }
 
     void dive(bool x)
     {
@@ -42,13 +55,21 @@ public:
 
     void set(bool t) override { _cur = t; }
 
-    void ascend() override { _stack.pop(); }
+    void ascend() override {
+        _cur = _stack.top();
+        _stack.pop();
+        if (_name == "isConst") {
+            LOGD("CONST ascend" << _stack.size() << _name);
+
+        }
+    }
 
     bool get() override { return _cur; }
 
 private:
     std::stack<bool> _stack;
     bool             _cur = false;
+    string _name;
 };
 
 class IRGlobalSwitch
@@ -56,8 +77,13 @@ class IRGlobalSwitch
 public:
     IRBoolSwitch isConst;
     IRBoolSwitch isInFunc;
-};
+    IRBoolSwitch needLoad;
+    IRBoolSwitch isCVal;
 
+    IRGlobalSwitch() :
+            isConst(std::string("isConst")), isInFunc(std::string("inFUnc")), needLoad(std::string("needLoad")),
+            isCVal(std::string("isCVal")) {}
+};
 }   // namespace IRCtrl
 
 #endif   // SYSYLEX_IRGLOBALSWITCH_H

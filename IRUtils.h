@@ -30,6 +30,14 @@ public:
 
     static string valTypeToStr(IRValType _t);
 
+    static string floatTo64BitStr(float x);
+
+    /// parse a CVal to it's oringle like. first position is:
+    /// 0=INVALID, 1=INT, 2=FLOAT
+    /// \param cVal
+    /// \return
+    static std::tuple<size_t, int, float> parseCVal(const shared_ptr<CVal> &cVal);
+
 
 private:
     template<class T1, class T2>

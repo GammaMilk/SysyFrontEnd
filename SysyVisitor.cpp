@@ -7,16 +7,21 @@
 #include "IRExceptions.h"
 #include "IRGlobalSwitch.h"
 #include "IRBBController.h"
+#include "IRGlobal.h"
 
 namespace IRCtrl
 {
-std::shared_ptr<IRCtrl::IRBuilder>         g_builder;
-std::shared_ptr<IRCtrl::IRLayerController> g_lc;
-std::shared_ptr<IRCtrl::IRGlobalSwitch>    g_sw;
-std::shared_ptr<IRCtrl::IRBBController>    g_bbc;
+    // Init builder and layer controller
+    std::shared_ptr<IRCtrl::IRBuilder> g_builder = std::make_shared<IRCtrl::IRBuilder>(IRCtrl::IRBuilder());
+    std::shared_ptr<IRCtrl::IRLayerController> g_lc = std::make_shared<IRCtrl::IRLayerController>(
+            IRCtrl::IRLayerController());
+    std::shared_ptr<IRCtrl::IRGlobalSwitch> g_sw = std::make_shared<IRCtrl::IRGlobalSwitch>(IRCtrl::IRGlobalSwitch());
 }   // namespace IRCtrl
 
 using namespace IRCtrl;
+using IRCtrl::g_lc;
+using IRCtrl::g_builder;
+using IRCtrl::g_sw;
 
 /// compUnit: compUnitItem* EOF;
 /// \param context
@@ -25,14 +30,11 @@ std::any Visitor::visitCompUnit(SysyParser::CompUnitContext* context)
 {
     LOGD("Enter CompUnit");
 
-    // Init builder and layer controller
-    g_builder = std::make_shared<IRCtrl::IRBuilder>(IRCtrl::IRBuilder());
-    g_lc      = std::make_shared<IRCtrl::IRLayerController>(IRCtrl::IRLayerController());
-    g_sw      = std::make_shared<IRCtrl::IRGlobalSwitch>(IRCtrl::IRGlobalSwitch());
+
 
     for (auto& x : context->compUnitItem()) { x->accept(this); }
 
-    LOGD("Exit CompUnit");
+    LOGD("Exit CompUnit\nWell done.");
     return 0;
 }
 
@@ -222,7 +224,6 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
 {
     g_enable_log = false;
 
-
     // var's type
     IRCtrl::IRValType type = this->curBType;
 
@@ -230,23 +231,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
     string idName = context->Ident()->getText();
     LOGD("Enter VisitVarDef, id == " << idName);
 
-    // get the init val if exists
-    float fInit = 0;
-    int   iInit = 0;
-    if (context->initVal() != nullptr && context->exp().empty()) {
-        g_sw->isConst.dive(true);
-        auto initVal  = std::any_cast<shared_ptr<CVal>>(context->initVal()->accept(this));
-        auto fValInit = std::dynamic_pointer_cast<FloatCVal>(initVal);
-        auto iValInit = std::dynamic_pointer_cast<IntCVal>(initVal);
-        if (fValInit != nullptr) {
-            fInit = fValInit->fVal;
-            iInit = (int)fInit;
-        } else {
-            iInit = iValInit->iVal;
-            fInit = (float)iInit;
-        }
-        g_sw->isConst.ascend();
-    }
+
     if (g_lc->isInGlobal()) {
         // Only in Global, the initList can be initialized as const numbers.
         g_sw->isConst.dive();
@@ -255,7 +240,26 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
         if (context->exp().empty()) {
 
             // float/int a (= ?)*
-
+            // get the init val if exists
+            float fInit = 0;
+            int iInit = 0;
+            // only not array, not lVal can be initialized by this way.
+            // but how can we know is that a lVal?
+            // use try...
+            if (context->initVal() != nullptr && context->exp().empty()) {
+                g_sw->isConst.dive(true);
+                auto initVal = std::any_cast<shared_ptr<CVal>>(context->initVal()->accept(this));
+                auto fValInit = std::dynamic_pointer_cast<FloatCVal>(initVal);
+                auto iValInit = std::dynamic_pointer_cast<IntCVal>(initVal);
+                if (fValInit != nullptr) {
+                    fInit = fValInit->fVal;
+                    iInit = (int) fInit;
+                } else {
+                    iInit = iValInit->iVal;
+                    fInit = (float) iInit;
+                }
+                g_sw->isConst.ascend();
+            }
 
             // make a object and push it into LayerController and Builder
             if (type == IRCtrl::IRValType::Float) {
@@ -310,34 +314,80 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
         }
 
         g_sw->isConst.ascend();
-    } else {
+    }
         // TODO local define like local int/float id([])* (= ?)?
+    else {
         g_enable_log = true;
         LOGD("Local Var name == " << idName << ",  type = " << Utils::valTypeToStr(type));
         int           newLabel  = g_builder->getNewLabel();
         const string& newLabelS = "%" + std::to_string(newLabel);
         if (context->exp().empty()) {
-
             // local float/int a (= ?)*
+            auto sen = make_unique<AllocaSen>(newLabelS, makeType(type));
+            g_builder->addIntoCurBB(std::move(sen));
 
             // make a object and push it into LayerController and Builder
             if (type == IRCtrl::IRValType::Float) {
                 auto vVal = make_shared<LocalFloat>(newLabelS, idName);
                 if (context->initVal() != nullptr) {
-                    // local float has initialized
                     // TODO we need a "STORE" sentence.
                 }
                 g_lc->push(vVal);
             } else {
-                auto vVal = make_shared<LocalInt>(idName);
+                auto vVal = make_shared<LocalInt>(newLabelS, idName);
                 if (context->initVal() != nullptr) {
                     // local float has initialized
                     // TODO we need a "STORE" sentence.
                 }
                 g_lc->push(vVal);
             }
-            auto sen = make_unique<AllocaSen>(newLabelS, makeType(type));
-            g_builder->addIntoCurBB(std::move(sen));
+
+            // All the code below is about init the val.
+            // get the init val if exists
+            float fInit = 0;
+            int iInit = 0;
+            // only not array, not lVal can be initialized by this way.
+            // but how can we know is that a lVal?
+            // use try...
+            if (context->initVal() != nullptr) {
+                // initVal may be lVal exp or pure number(CVal)
+                g_sw->isConst.dive(true);
+                auto anyResult = context->initVal()->accept(this);
+                shared_ptr<CVal> initVal;
+                try {
+                    initVal = ACS(CVal, anyResult);
+                    auto fValInit = std::dynamic_pointer_cast<FloatCVal>(initVal);
+                    auto iValInit = std::dynamic_pointer_cast<IntCVal>(initVal);
+                    if (fValInit != nullptr) {
+                        fInit = fValInit->fVal;
+                        iInit = (int) fInit;
+                    } else {
+                        iInit = iValInit->iVal;
+                        fInit = (float) iInit;
+                    }
+                    string actualValS;
+                    if (type == IRCtrl::IRValType::Float) {
+                        actualValS = Utils::floatTo64BitStr(fInit);
+                    } else {
+                        actualValS = std::to_string(iInit);
+                    }
+                    auto storeSen = MU<StoreSen>(g_builder->getNewLocalLabelStr(), makeType(type), actualValS);
+                    g_builder->addIntoCurBB(std::move(storeSen));
+
+                }
+                    // Not Pure Num. it was lVal
+                catch (const std::bad_any_cast &) {
+                    // Oh, it was not a pure number...
+                    // But it just a lVal or a lVal expression.
+                    g_sw->isConst.dive(false);
+                    auto lastLabel = g_builder->getLastLocalLabelStr();
+                    // TODO we need a store
+                    g_sw->isConst.ascend();
+                }
+                g_sw->isConst.ascend();
+
+            }
+
         } else {
 
             // local Array
@@ -431,7 +481,7 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     case IRValType::Void: LOGD("Void Func"); break;
     }
 #pragma clang diagnostic pop
-
+    auto retType = this->curBType;
 
     // IRFunction signature
     // IRFunction fps
@@ -443,7 +493,7 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     vector<SPType> fpTypes;
     fpTypes.reserve(fps.size());
     for (auto& p : fps) { fpTypes.emplace_back(p->fpType); }
-    FuncType funcType(this->curBType, fpTypes);
+    FuncType funcType(retType, fpTypes);
     // ↑↑↑↑↑↑ funcType here.
 
     // To build a function var, we need its name, FPTypes, and its returns.
@@ -465,11 +515,32 @@ std::any Visitor::visitFuncDef(SysyParser::FuncDefContext* context)
     g_sw->isInFunc.dive(true);
     g_lc->dive();
     // operating on args.
+    //   %v9 = alloca i32
+    //  store i32 %arg_0, i32* %v9
     for (int l = 0; l < fpTypes.size(); l++) {
-        auto I1lII1llI10Oll01O = make_unique<AllocaSen>("%arg_" + std::to_string(l), fpTypes[l]);
+        // alloca
+        auto I1lII1llI10Oll01O = make_unique<AllocaSen>(g_builder->getNewLocalLabelStr(), fpTypes[l]);
         g_builder->addIntoCurBB(std::move(I1lII1llI10Oll01O));
+        // store
+        auto l11lII1lI1lI1lI1l = MU<StoreSen>(g_builder->getLastLocalLabelStr(), fpTypes[l],
+                                              "%arg_" + std::to_string(l));
+        g_builder->addIntoCurBB(std::move(l11lII1lI1lI1lI1l));
+        auto &fpVar = fps[l];
+        fpVar->id = g_builder->getLastLocalLabelStr();
+        LOGD("FPVAR name=" << fpVar->name << ", id=" << fpVar->id);
+        g_lc->push(fpVar);
     }
+    // visit its block
     context->block()->accept(this);
+    // check void function has ret sen?
+    if (funcType.retType == IRCtrl::IRValType::Void) {
+        for (auto &bb: g_builder->getFunction()->bbs) {
+            if (!bb->hasTerminalSen()) {
+                auto retSen = MU<ReturnSen>("", makeType(IRCtrl::IRValType::Void));
+                bb->add(std::move(retSen));
+            }
+        }
+    }
     g_lc->ascend();
     g_sw->isInFunc.ascend();
 
@@ -504,6 +575,10 @@ std::any Visitor::visitVoid(SysyParser::VoidContext* context)
 }
 
 /// funcFParams: funcFParam (Comma funcFParam)*;
+///
+/// funcFParam:
+///	bType Ident													# scalarParam
+///	| bType Ident Lbracket Rbracket (Lbracket exp Rbracket)*	# arrayParam;
 /// \param context
 /// \return vector<SPFPVar> t;
 std::any Visitor::visitFuncFParams(SysyParser::FuncFParamsContext* context)
@@ -536,8 +611,9 @@ std::any Visitor::visitScalarParam(SysyParser::ScalarParamContext* context)
     } break;
     default: break;
     }
-    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText(), "");
-    fp->fpType = fParam;
+    SPFPVar fp = make_shared<FPVar>("", context->Ident()->getText());
+//    fp->fpType = fParam;
+    fp->setFpType(fParam);
     return fp;
 }
 
@@ -565,9 +641,11 @@ std::any Visitor::visitArrayParam(SysyParser::ArrayParamContext* context)
     g_sw->isConst.ascend();
 
     fParam     = make_shared<ArrayType>(curBType, shape);
-    SPFPVar fp = make_shared<FPVar>(context->Ident()->getText(), "");
-    fp->fpType = fParam;
+    SPFPVar fp = make_shared<FPVar>("", context->Ident()->getText());
+//    fp->fpType = fParam;
+    fp->setFpType(fParam);
     return fp;
+
 
     // ATTENTION: I didn't make a
 }
@@ -606,7 +684,12 @@ std::any Visitor::visitBlockItem(SysyParser::BlockItemContext* context)
 /// \return
 std::any Visitor::visitAssign(SysyParser::AssignContext* context)
 {
-    if (g_sw->isInFunc.get()) {}
+    if (g_sw->isInFunc.get()) {
+        auto lVal_a = context->lVal()->accept(this);
+        g_sw->needLoad.dive(true);
+        auto exp_a = context->exp()->accept(this);
+        g_sw->needLoad.ascend();
+    }
     return 0;
 }
 
@@ -640,15 +723,59 @@ std::any Visitor::visitContinue(SysyParser::ContinueContext* context)
     return 0;
 }
 
+/// stmt:
+///	| Return exp? Semicolon						# return;
+/// \param context
+/// \return
 std::any Visitor::visitReturn(SysyParser::ReturnContext* context)
 {
+    if (context->exp() == nullptr) {
+        g_builder->addIntoCurBB(MU<ReturnSen>("", makeType(IRCtrl::IRValType::Void)));
+    } else {
+        // TODO
+        auto r = context->exp()->accept(this);
+        if (g_sw->isCVal.get()) {
+            auto cv = ACS(CVal, r);
+            size_t pos;
+            int iVal;
+            float fVal;
+            std::tie(pos, iVal, fVal) = Utils::parseCVal(cv);
+            if (pos > 0) { // valid return number.
+                if (g_builder->getFunction()->_type.retType == IRCtrl::IRValType::Int) {
+                    auto retInt = MU<ReturnSen>(std::to_string(iVal), makeType(IRCtrl::IRValType::Int));
+                    g_builder->addIntoCurBB(std::move(retInt));
+                } else {
+                    auto retFl = MU<ReturnSen>(Utils::floatTo64BitStr(fVal), makeType(IRCtrl::IRValType::Float));
+                    g_builder->addIntoCurBB(std::move(retFl));
+                }
+            }
+        }
+            // LVal expression branch
+        else {
+
+        }
+    }
     return 0;
 }
 
+/// If the result is CVal, it will return. Otherwise it doesn't return anything.
+/// Instead, this function will add a sen into current function.
+/// \param context
+/// \return shared_ptr<CVal> or nothing.
 std::any Visitor::visitExp(SysyParser::ExpContext* context)
 {
     // FINAL.
-    return context->addExp()->accept(this);
+    auto a = context->addExp()->accept(this);
+
+    try {
+        ACS(CVal, a);
+        g_sw->isCVal.set(true);
+        return a;
+    } catch (const std::bad_any_cast &) {
+        LOGD("bad any_cast at an exp()");
+        g_sw->isCVal.set(false);
+        return 0;
+    }
 }
 
 std::any Visitor::visitCond(SysyParser::CondContext* context)
@@ -669,20 +796,41 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
         return val;
     } else {
         // Non const, we need generate some code to store the result.
+        string idName = context->Ident()->getText();
+        LOGD("idName=" << idName);
+        string sourceId;
+        bool isLocal = true;
+        shared_ptr<IRVal> t = g_lc->queryLocal(idName);
+        if (t == nullptr) {
+            // query global.
+            t = g_lc->query(idName);
+            isLocal = false;
+            sourceId = "@" + t->name;
+        } else {
+            sourceId = dynamic_pointer_cast<LocalVar>(t)->id;
+        }
+        // need load the exact value from memory?
+        // TODO FIX IT
+        if (g_sw->needLoad.get()) {
+            unique_ptr<LocalSen> s = MU<LoadSen>(g_builder->getNewLocalLabelStr(), t->getTrueAdvType(), sourceId);
+            g_builder->addIntoCurBB(std::move(s));
+        }
         // TODO.
     }
     return 0;
 }
 
 /// primaryExp:
-//	Lparen exp Rparen	# primaryExp_####
+//	Lparen exp Rparen	# primaryExp_       <-----------
 //	| lVal				# lValExpr
-//	| number			# primaryExp_####
+//	| number			# primaryExp_       <-----------
 /// ATTENTION: THIS RULE HAS 2: exp and number!!!!!!!!
 /// \param context
 /// \return
 std::any Visitor::visitPrimaryExp_(SysyParser::PrimaryExp_Context* context)
 {
+    // 写了跟他妈没写一样这个判断。狗屁不通！
+    // TODO
     if (g_sw->isConst.get()) {
         if (context->exp()) {
             return context->exp()->accept(this);
@@ -690,18 +838,35 @@ std::any Visitor::visitPrimaryExp_(SysyParser::PrimaryExp_Context* context)
             return context->number()->accept(this);
         }
     } else {
-        // TODO
+        if (context->exp()) {
+            return context->exp()->accept(this);
+        } else {
+            return context->number()->accept(this);
+        }
     }
     return 0;
 }
 /// primaryExp:
 //	Lparen exp Rparen	# primaryExp_
-//	| lVal				# lValExpr
+//	| lVal				# lValExpr      <-----------
 /// \param context
 /// \return
 std::any Visitor::visitLValExpr(SysyParser::LValExprContext* context)
 {
-    return context->lVal()->accept(this);
+    // If in function:
+    // Need Load, Not Const.
+    if (g_sw->isInFunc.get()) {
+        g_sw->needLoad.dive(true);
+        g_sw->isConst.dive(false);
+        auto ret = context->lVal()->accept(this);
+        g_sw->isConst.ascend();
+        g_sw->needLoad.ascend();
+        return ret;
+    }
+        // else not in function, outside, just calc the actually value.
+    else {
+        return context->lVal()->accept(this);
+    }
 }
 
 std::any Visitor::visitDecIntConst(SysyParser::DecIntConstContext* context)
@@ -865,8 +1030,14 @@ std::any Visitor::visitMul(SysyParser::MulContext* context)
 
         auto res = Utils::constBiCalc(lv, rv, IRCtrl::IRValOp::Mul);
         return res;
-    } else {
-        //        TODO
+    } else {        // addExp と mulExp IntORFloatCVal returnする
+//        auto lav = context->mulExp()->accept(this);
+//        auto rav = context->unaryExp()->accept(this);
+//        auto lv  = std::any_cast<std::shared_ptr<LocalVar>>(lav);
+//        auto rv  = std::any_cast<std::shared_ptr<LocalVar>>(rav);
+//
+//
+//        return res;
         LOGD("VisitMul Not Const!!!!!");
     }
     return 0;

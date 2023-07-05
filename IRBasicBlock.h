@@ -29,6 +29,8 @@ public:
     {
     }
     void add(UPLocalSen sen);
+
+    bool hasTerminalSen();
 };
 
 using SPBasicBlock = std::shared_ptr<IRBasicBlock>;

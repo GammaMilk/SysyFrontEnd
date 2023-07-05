@@ -20,14 +20,15 @@ const float CONV1 = 233, CONV2 = 0xfff;
 
 const int   cccccccc = 2 * 31 * 1847;
 const float dddddddd = (cccccccc * 2) / (31 * 1847) / 2;
-const int   c[2][3]  = {{}, {4, 5, 6}};
+const int c[2][3] = {{},
+                     {4, 5}};
 
 float bb = 2.3, cc = 3.3;
 float dd;
 float d[1 * 2] = {1.1, 2.2};
 float e[12];
 
-int func(int p[][58]])
+int func(int p)
 {
     p = p - 1;
     int bbbbb[10];
@@ -35,7 +36,8 @@ int func(int p[][58]])
 }
 
 void  VoidFunc() {}
-float floatFunc()
+
+float floatFunc(float a, float b, int c)
 {
     return 0.1;
 }
@@ -43,6 +45,8 @@ float floatFunc()
 int main()
 {
     int b;         // decl
+    int main_d = 114514;
+    int main_c = a;
     b = func(a);   // stmt
-    return b;      // stmt
+    return 0;      // stmt
 }

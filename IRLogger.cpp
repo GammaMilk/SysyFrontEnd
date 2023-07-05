@@ -11,7 +11,7 @@ std::ostream& sysy_debug()
 {
 #ifdef _DEBUG
     if (true)
-        return std::cerr;
+        return std::cout;
     else
         return g_debug_null_out;
 #else

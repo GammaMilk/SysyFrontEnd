@@ -67,4 +67,25 @@ string AllocaSen::toString()
     return m_lv + " = alloca " + irType->toString();
 }
 
+    string ReturnSen::toString() {
+        return "ret " + this->irType->toString() + " " + this->m_lv;
+    }
+
+    string LoadSen::toString() {
+        return _label + " = load " + this->irType->toString() + ", " + makePointer(irType)->toString() + " " +
+               this->sourceName;
+    }
+
+    string StoreSen::toString() {
+        stringstream ss;
+        ss << "store " << irType->toString() << " " << sourceName << ", ";
+        ss << makePointer(irType)->toString() << " " << _label;
+        return ss.str();
+    }
+
+/// %v16 = sitofp i32 5 to float
+/// \return
+    string SiToFpSen::toString() {
+        return _label + " = sitofp " + _retType->toString() + " " + sourceName + " to float";
+    }
 }   // namespace IRCtrl

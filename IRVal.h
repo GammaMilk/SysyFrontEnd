@@ -37,6 +37,8 @@ public:
         , type(IRValType::Unknown)
     {
     }
+
+    SPType getTrueAdvType() const;
 };
 
 class NumberVal : public IRVal
@@ -191,22 +193,6 @@ public:
 
     string toString() override;
 };
-class BoolVal : public IntVal
-{
-    int iVal{};
-    explicit BoolVal(const string& name1)
-        : IntVal(name1)
-    {
-        type = IRValType::Bool;
-    }
-    BoolVal(const string& name1, int val)
-        : IntVal(name1)
-    {
-        iVal = val;
-    }
-
-    string toString() override;
-};
 class FloatVal : public VVal
 {
 public:
@@ -276,6 +262,23 @@ public:
     string toString() override;
 };
 
+    class LocalBool : public LocalInt {
+        int iVal{};
+
+        explicit LocalBool(const string &_id)
+                : LocalInt(_id) {
+            type = IRValType::Bool;
+        }
+
+        LocalBool(const string &_id, const string &_name)
+                : LocalInt(_id) {
+            type = IRValType::Bool;
+            name = _name;
+        }
+
+        string toString() override;
+    };
+
 class LocalFloat : public LocalVar
 {
 public:
@@ -304,6 +307,10 @@ public:
     }
     string toString() override;
     SPType fpType;
+
+    [[nodiscard]] const SPType &getFpType() const;
+
+    void setFpType(const SPType &fpType);
 };
 using SPFPVar = shared_ptr<FPVar>;
 

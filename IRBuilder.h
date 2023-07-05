@@ -29,8 +29,15 @@ public:
     void build(std::ostream& os);
     void addIntoCurBB(unique_ptr<LocalSen> sen);
 
-    int               getNewLabel();
+    int getNewLabel();
+
+    string getNewLocalLabelStr();
+
+    string getLastLocalLabelStr();
     [[nodiscard]] int getLastLabel() const;
+
+    const unique_ptr<LocalSen> &getLastSen() const;
+
 
     std::string                                 build();
     [[nodiscard]] const shared_ptr<IRFunction>& getFunction() const;
@@ -40,12 +47,12 @@ private:
     // Here stmts only means other stmt(other than function, var, const)
     std::vector<std::string>   _stmts;
     std::string                _filename;
-    int                        _label = 100;
+    int _label = 1000;
     std::shared_ptr<IRProgram>  program;
     std::shared_ptr<IRFunction> thisFunction;
 
 public:
-    const shared_ptr<IRProgram>& getProgram() const;
+    [[nodiscard]] const shared_ptr<IRProgram> &getProgram() const;
 
 
 public:

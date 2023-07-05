@@ -49,4 +49,20 @@ SPType makeType(IRValType _t)
     if (_t == IRValType::Void) return make_shared<VoidType>();
     return nullptr;
 }
+
+    SPType makePointer(const SPType &_t, size_t stars) {
+        auto pointer = make_shared<PointerType>(_t);
+        for (auto i = 1; i < stars; i++) {
+            pointer = make_shared<PointerType>(pointer);
+        }
+        return pointer;
+    }
+
+    SPType IRCtrl::makePointer(const SPType &_t) {
+        return makePointer(_t, 1);
+    }
+
+    string PointerType::toString() {
+        return this->targetType->toString() + "*";
+    }
 }   // namespace IRCtrl

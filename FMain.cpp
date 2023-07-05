@@ -35,22 +35,47 @@ constexpr bool      is_debug    = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
 
+int main(int argc, const char **argv) {
+    std::string inputFile;
+    std::string outputFile;
+    std::string optimizationLevel;
 
-int main(int, const char**)
-{
-    std::ifstream file;
-    std::ofstream outfile;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+
+        if (arg == "-S") {
+            // 处理 -S 参数
+        } else if (arg == "-o") {
+            if (i + 1 < argc) {
+                outputFile = argv[i + 1];
+                ++i;   // 跳过下一个参数
+            } else {
+                std::cerr << "缺少输出文件名" << std::endl;
+                return 1;
+            }
+        } else if (arg == "-O1") {
+            // 处理 -O1 参数
+        } else {
+            inputFile = arg;
+        }
+    }
+
+    // 处理缺省参数
+    if (inputFile.empty()) { inputFile = "../testsrc/1.c"; }
+    if (outputFile.empty()) { outputFile = "../testsrc/1.txt"; }
+    std::ifstream inputStream;
+    std::ofstream outputStream;
 
     auto sourceFileName = "../testsrc/1.c";
 
-    outfile.open("../testsrc/1.txt", std::ios::out);
-    file.open(sourceFileName, std::ios::in);
-    if (!file) {
-        cout << "no such file" << endl;
+    outputStream.open("../testsrc/1.txt", std::ios::out);
+    inputStream.open(sourceFileName, std::ios::in);
+    if (!inputStream) {
+        cout << "no such inputStream" << endl;
         return 0;
     }
     LOGD("File Fine.");
-    ANTLRInputStream  input(file);
+    ANTLRInputStream input(inputStream);
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 
@@ -71,12 +96,12 @@ int main(int, const char**)
 
     cout << endl;
 
-    //    outfile << tree->toStringTree(&parser, true) << endl;
+    //    outputStream << tree->toStringTree(&parser, true) << endl;
 
     IRCtrl::g_builder->setFilename(sourceFileName);
-    IRCtrl::g_builder->build(outfile);
+    IRCtrl::g_builder->build(outputStream);
 
 
-    outfile.close();
+    outputStream.close();
     return 0;
 }

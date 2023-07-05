@@ -162,7 +162,37 @@ string Utils::valTypeToStr(IRValType _t)
     case IRValType::Unknown: return "ERROR";
     }
 }
-template<class T1, class T2>
+
+    string Utils::floatTo64BitStr(float x) {
+        stringstream ss;
+        //    ss<<"0x"<<std::hex<<reinterpret_cast<uint32_t>(this->fVal);
+        // Method above was not allowed
+        // In LLVM-IR, a float is 64 bit.
+        double thisValue = x;
+        ss << "0x" << std::hex << *(uint64_t *) (&thisValue);
+        return ss.str();
+    }
+
+    std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal> &cVal) {
+        float fInit = 0;
+        int iInit = 0;
+        size_t position = 0;
+        auto fValInit = std::dynamic_pointer_cast<FloatCVal>(cVal);
+        auto iValInit = std::dynamic_pointer_cast<IntCVal>(cVal);
+        if (fValInit != nullptr) {
+            fInit = fValInit->fVal;
+            iInit = (int) fInit;
+            position = 1;
+        } else if (iValInit != nullptr) {
+            iInit = iValInit->iVal;
+            fInit = (float) iInit;
+            position = 2;
+        }
+
+        return {position, iInit, fInit};
+    }
+
+    template<class T1, class T2>
 T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)
 {
     switch (op) {
