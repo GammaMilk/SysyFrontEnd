@@ -19,12 +19,12 @@ class IRProgram
 {
 private:
 public:
-    [[nodiscard]] const vector<shared_ptr<VVal>>&     getGlobalVar() const;
+    [[nodiscard]] const vector<shared_ptr<VVal>>&       getGlobalVar() const;
     [[nodiscard]] const vector<shared_ptr<CVal>>&       getGlobalConst() const;
     [[nodiscard]] const vector<shared_ptr<IRFunction>>& getFuncs() const;
 
 private:
-    vector<shared_ptr<VVal>>     _global_var;
+    vector<shared_ptr<VVal>>       _global_var;
     vector<shared_ptr<CVal>>       _global_const;
     vector<shared_ptr<IRFunction>> _funcs;
 

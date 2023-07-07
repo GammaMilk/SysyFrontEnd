@@ -36,7 +36,7 @@ string ArrayType::toString()
 }
 string FuncType::toString()
 {
-    return std::string();
+    return "<<FUNCTION TYPE NOT IMPL>>";
 }
 string VoidType::toString()
 {
@@ -50,19 +50,24 @@ SPType makeType(IRValType _t)
     return nullptr;
 }
 
-    SPType makePointer(const SPType &_t, size_t stars) {
-        auto pointer = make_shared<PointerType>(_t);
-        for (auto i = 1; i < stars; i++) {
-            pointer = make_shared<PointerType>(pointer);
-        }
-        return pointer;
-    }
+SPType makePointer(const SPType& _t, size_t stars)
+{
+    auto pointer = make_shared<PointerType>(_t);
+    for (auto i = 1; i < stars; i++) { pointer = make_shared<PointerType>(pointer); }
+    return pointer;
+}
 
-    SPType IRCtrl::makePointer(const SPType &_t) {
-        return makePointer(_t, 1);
-    }
+SPType IRCtrl::makePointer(const SPType& _t)
+{
+    return makePointer(_t, 1);
+}
 
-    string PointerType::toString() {
-        return this->targetType->toString() + "*";
-    }
+string PointerType::toString()
+{
+    return this->targetType->toString() + "*";
+}
+string BoolType::toString()
+{
+    return "i1";
+}
 }   // namespace IRCtrl

@@ -16,9 +16,14 @@ namespace IRCtrl
 class IRVal : public IPrintable
 {
 public:
-    std::string name;
-    IRValType   type;
-    SPType      advancedType;   // Only function and array has advancedType
+    std::string   name;
+    const string& getName() const;
+    void          setName(const string& name);
+    const string& getId() const;
+    void          setId(const string& id);
+    std::string   id;
+    IRValType     type;
+    SPType        advancedType;   // Only function and array has advancedType
 
     IRVal()
         : name(std::string(""))
@@ -28,17 +33,19 @@ public:
 
     IRVal(const std::string& name1, IRValType type1)
         : name(std::string(name1))
+        , id(string(name1))
         , type(type1)
     {
     }
 
     explicit IRVal(const std::string& name1)
         : name(std::string(name1))
+        , id(string(name1))
         , type(IRValType::Unknown)
     {
     }
 
-    SPType getTrueAdvType() const;
+    [[nodiscard]] SPType getTrueAdvType() const;
 };
 
 class NumberVal : public IRVal
@@ -56,14 +63,12 @@ public:
     {
     }
 
-    NumberVal(bool is_global, bool is_const)
-        : isGlobal(is_global)
-        , isConst(is_const)
-    {
-    }
+    //    NumberVal(bool is_global, bool is_const)
+    //        : isGlobal(is_global)
+    //        , isConst(is_const)
+    //    {
+    //    }
 };
-
-
 
 
 /**
@@ -77,7 +82,6 @@ public:
     {
         isConst = true;
     }
-
 };
 
 class IntCVal : public CVal
@@ -131,8 +135,10 @@ public:
 class InitListVal : public IRVal
 {
 public:
+    enum { INITLIST, CVAL };
     vector<shared_ptr<InitListVal>> initList;
     vector<shared_ptr<CVal>>        cVal;
+    vector<decltype(CVAL)>          which;
     IRValType                       contained = IRValType::Unknown;
     string                          toString() override;
     [[nodiscard]] bool              empty() const;
@@ -142,6 +148,7 @@ public:
 class CArr : public CVal
 {
 public:
+    enum { CARR, CVAL, ZERO };
     explicit CArr(const string& name1, IRValType contained)
         : CVal(name1)
         , containedType(contained)
@@ -151,12 +158,14 @@ public:
     }
     ~CArr() = default;
 
-    virtual string toString() override;
+    string           toString() override;
+    shared_ptr<CVal> access(const vector<int>& indices);
 
     std::deque<size_t>       _shape;
     bool                     isZero = false;
     vector<shared_ptr<CArr>> _childArrs;
     vector<shared_ptr<CVal>> _childVals;
+    vector<decltype(CARR)>   witch;
     IRValType                containedType = IRValType::Float;
 
 protected:
@@ -237,11 +246,7 @@ protected:
 class LocalVar : public IRVal
 {
 public:
-    string id = "-1";
-    explicit LocalVar(string _id)
-        : id(std::move(_id))
-    {
-    }
+    explicit LocalVar(string _id) { id = std::move(_id); }
 };
 using SPLocalVar = shared_ptr<LocalVar>;
 
@@ -262,22 +267,25 @@ public:
     string toString() override;
 };
 
-    class LocalBool : public LocalInt {
-        int iVal{};
+class LocalBool : public LocalInt
+{
+    int iVal{};
 
-        explicit LocalBool(const string &_id)
-                : LocalInt(_id) {
-            type = IRValType::Bool;
-        }
+    explicit LocalBool(const string& _id)
+        : LocalInt(_id)
+    {
+        type = IRValType::Bool;
+    }
 
-        LocalBool(const string &_id, const string &_name)
-                : LocalInt(_id) {
-            type = IRValType::Bool;
-            name = _name;
-        }
+    LocalBool(const string& _id, const string& _name)
+        : LocalInt(_id)
+    {
+        type = IRValType::Bool;
+        name = _name;
+    }
 
-        string toString() override;
-    };
+    string toString() override;
+};
 
 class LocalFloat : public LocalVar
 {
@@ -308,9 +316,9 @@ public:
     string toString() override;
     SPType fpType;
 
-    [[nodiscard]] const SPType &getFpType() const;
+    [[nodiscard]] const SPType& getFpType() const;
 
-    void setFpType(const SPType &fpType);
+    void setFpType(const SPType& fpType);
 };
 using SPFPVar = shared_ptr<FPVar>;
 

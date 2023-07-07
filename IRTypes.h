@@ -11,6 +11,7 @@
 #include <stack>
 #include <sstream>
 using std::any_cast;
+using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::make_unique;
 using std::shared_ptr;
@@ -19,12 +20,12 @@ using std::string;
 using std::stringstream;
 using std::unique_ptr;
 using std::vector;
-using std::dynamic_pointer_cast;
 
 #define MS make_shared
 #define MU make_unique
 
-#define ACS(_ST, _TARG) std::any_cast<shared_ptr< _ST >>((_TARG))
+#define ACS(_ST, _TARG) std::any_cast<shared_ptr<_ST>>((_TARG))
+#define DPC(_ST, _TARG) std::dynamic_pointer_cast<_ST>((_TARG))
 
 namespace IRCtrl
 {
@@ -73,6 +74,17 @@ public:
     }
     string toString() override;
 };
+
+class BoolType : public IRType
+{
+public:
+    BoolType()
+        : IRType(IRValType::Bool)
+    {
+    }
+    string toString() override;
+};
+
 class FloatType : public IRType
 {
 public:
@@ -122,7 +134,8 @@ class PointerType : public IRType
 {
 public:
     explicit PointerType(SPType target)
-        : IRType(IRValType::Pointer), targetType(std::move(target))
+        : IRType(IRValType::Pointer)
+        , targetType(std::move(target))
     {
     }
 
@@ -136,9 +149,9 @@ public:
 /// \return `nullptr` or target type.
 SPType makeType(IRValType _t);
 
-    SPType makePointer(const SPType &_t, size_t stars);
+SPType makePointer(const SPType& _t, size_t stars);
 
-    SPType makePointer(const SPType &_t);
+SPType makePointer(const SPType& _t);
 
 }   // namespace IRCtrl
 

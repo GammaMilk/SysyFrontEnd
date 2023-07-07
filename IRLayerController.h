@@ -29,12 +29,17 @@ public:
      * @param val the target val
      */
     void push(const std::shared_ptr<IRVal>& val);
+    void pushGlobal(const std::shared_ptr<IRVal>& val);
 
     std::shared_ptr<IRVal> query(const std::shared_ptr<IRVal>& val, bool recursively = true);
 
     std::shared_ptr<IRVal> query(const std::string& symbol_name, bool recursively = true);
 
-    std::shared_ptr<LocalVar> queryLocal(const std::string& symbol_name, bool recursively = true);
+    //    std::shared_ptr<LocalVar> queryLocal(const std::string& symbol_name, bool recursively =
+    //    true);
+    std::shared_ptr<IRVal> queryLocal(
+        const std::string& symbol_name, const std::string& functionName, bool recursively = true
+    );
 
 private:
     std::vector<IRLayer> _layers;

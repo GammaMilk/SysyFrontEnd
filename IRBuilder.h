@@ -24,41 +24,47 @@ public:
 
     explicit IRBuilder(const std::string& filename);
     void setFilename(const std::string& filename);
+
+    // function
     void createFunction(IRCtrl::FuncType& type1, const string& name1);
     void finishFunction();
-    void build(std::ostream& os);
-    void addIntoCurBB(unique_ptr<LocalSen> sen);
+    // builder
+    void        build(std::ostream& os);
+    std::string build();
+    void        addIntoCurBB(unique_ptr<LocalSen> sen);
 
-    int getNewLabel();
-
-    string getNewLocalLabelStr();
-
-    string getLastLocalLabelStr();
-    [[nodiscard]] int getLastLabel() const;
-
-    const unique_ptr<LocalSen> &getLastSen() const;
-
-
-    std::string                                 build();
+    // label and sen getter
+    int                                         getNewLabel();
+    string                                      getNewLocalLabelStr();
+    string                                      getLastLocalLabelStr() const;
+    [[nodiscard]] int                           getLastLabel() const;
+    [[nodiscard]] const unique_ptr<LocalSen>&   getLastSen() const;
     [[nodiscard]] const shared_ptr<IRFunction>& getFunction() const;
 
+    // tools
+    void checkTypeAndCast(SPType src, SPType target, string sourceName);
+    /// Do a cast if type not eq or do nothing
+    /// \param src source type
+    /// \param target target type
+    /// \param sourceName source name
+    void checkTypeAndCast(IRValType src, IRValType target, string sourceName);
+
+
+    // AddInstuctions into the builder.
+    const unique_ptr<LocalSen>& addAdd(SPType t_, string v1, string v2);
+    const unique_ptr<LocalSen>& addSub(SPType t_, string v1, string v2);
 
 private:
     // Here stmts only means other stmt(other than function, var, const)
-    std::vector<std::string>   _stmts;
-    std::string                _filename;
-    int _label = 1000;
+    std::vector<std::string>    _stmts;
+    std::string                 _filename;
+    int                         _label = 1000;
     std::shared_ptr<IRProgram>  program;
     std::shared_ptr<IRFunction> thisFunction;
 
 public:
-    [[nodiscard]] const shared_ptr<IRProgram> &getProgram() const;
+    [[nodiscard]] const shared_ptr<IRProgram>& getProgram() const;
 
-
-public:
-    [[nodiscard]] bool isInGlobalScope() const;
-
-    void setInGlobalScope(bool x);
 
 private:
     void _as(const std::string& s);

@@ -103,7 +103,7 @@ public:
     string toString() override;
 
     shared_ptr<IRType> _retType = makeType(IRValType::Void);
-    string _label; // -> %3 <- = addi %2, 1
+    string             _label;   // -> %3 <- = addi %2, 1
 };
 using UPLocalSen = unique_ptr<LocalSen>;
 using SPLocalSen = shared_ptr<LocalSen>;
@@ -112,9 +112,10 @@ class AllocaSen : public LocalSen
 {
 public:
     AllocaSen(string lv, SPType irType1)
-        : irType(std::move(irType1)), m_lv(std::move((lv)))
+        : irType(std::move(irType1))
+        , m_lv(std::move((lv)))
     {
-        _op = IROp::ALLOCA;
+        _op      = IROp::ALLOCA;
         _retType = makePointer(irType);
     }
 
@@ -126,11 +127,14 @@ public:
     string toString() override;
 };
 
-    class ReturnSen : public LocalSen {
-    public:
-        ReturnSen(string lv, SPType irType1)
-                : irType(std::move(irType1)), m_lv(std::move((lv))) {
-            _op = IROp::RET;
+class ReturnSen : public LocalSen
+{
+public:
+    ReturnSen(string lv, SPType irType1)
+        : irType(std::move(irType1))
+        , m_lv(std::move((lv)))
+    {
+        _op = IROp::RET;
     }
 
 protected:
@@ -141,51 +145,114 @@ public:
     string toString() override;
 };
 
-    class LoadSen : public LocalSen {
-    public:
-        LoadSen(string retLabel, SPType ty, string sourceName_) :
-                sourceName(std::move(sourceName_)), irType(std::move(ty)) {
-            _label = std::move(retLabel);
-            _retType = irType;
-        }
+class LoadSen : public LocalSen
+{
+public:
+    LoadSen(string retLabel, SPType ty, string sourceName_)
+        : sourceName(std::move(sourceName_))
+        , irType(std::move(ty))
+    {
+        _label   = std::move(retLabel);
+        _retType = irType;
+        _op      = IROp::LOAD;
+    }
 
-        string toString() override;
+    string toString() override;
 
-    protected:
-        SPType irType;
-        string sourceName;
+protected:
+    SPType irType;
+    string sourceName;
+};
 
-    };
+class StoreSen : public LocalSen
+{
+public:
+    StoreSen(string targetLabel, SPType ty, string sourceName_)
+        : sourceName(std::move(sourceName_))
+        , irType(std::move(ty))
+    {
+        _label = std::move(targetLabel);
+        _op    = IROp::STORE;
+    }
 
-    class StoreSen : public LocalSen {
-    public:
-        StoreSen(string targetLabel, SPType ty, string sourceName_) :
-                sourceName(std::move(sourceName_)), irType(std::move(ty)) {
-            _label = std::move(targetLabel);
-        }
+    string toString() override;
 
-        string toString() override;
-
-    protected:
-        SPType irType;
-        string sourceName;
-
-    };
+protected:
+    SPType irType;
+    string sourceName;
+};
 
 /// %v16 = sitofp i32 5 to float
-    class SiToFpSen : public LocalSen {
-        SiToFpSen(string retLabel, SPType ty, string sourceName_) :
-                sourceName(std::move(sourceName_)) {
-            _label = std::move(retLabel);
-            _retType = std::move(ty);
-        }
+class SiToFpSen : public LocalSen
+{
+public:
+    SiToFpSen(string retLabel, SPType ty, string sourceName_)
+        : sourceName(std::move(sourceName_))
+    {
+        _label   = std::move(retLabel);
+        _retType = std::move(ty);
+        _op      = IROp::SITOFP;
+    }
 
-        string toString() override;
+    string toString() override;
 
-    protected:
-        string sourceName;
-    };
+protected:
+    string sourceName;
+};
 
+class FpToSiSen : public LocalSen
+{
+public:
+    FpToSiSen(string retLabel, SPType ty, string sourceName_)
+        : sourceName(std::move(sourceName_))
+    {
+        _label   = std::move(retLabel);
+        _retType = std::move(ty);
+        _op      = IROp::FPTOSI;
+    }
+
+    string toString() override;
+
+protected:
+    string sourceName;
+};
+
+class BiSen : public LocalSen
+{
+public:
+    BiSen(string outLabel, IROp op_, string v1_, SPType ty, string v2_)
+        : v1(v1_)
+        , v2(v2_)
+    {
+        _label   = std::move(outLabel);
+        _retType = std::move(ty);
+        _op      = op_;
+    }
+
+    string toString() override;
+
+protected:
+    string v1, v2;
+};
+
+class GepSen : public LocalSen
+{
+public:
+    GepSen(SPType t_, vector<int> offset_)
+        : t(std::move(t_))
+        , offset(std::move(offset_))
+    {
+    }
+    string toString() override;
+
+protected:
+    SPType      t;
+    vector<int> offset;
+};
+
+
+// tool functions:
+static string opToStr(IROp op_);
 }   // namespace IRCtrl
 
 

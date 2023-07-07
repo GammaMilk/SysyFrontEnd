@@ -35,7 +35,8 @@ constexpr bool      is_debug    = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
 
-int main(int argc, const char **argv) {
+int main(int argc, const char** argv)
+{
     std::string inputFile;
     std::string outputFile;
     std::string optimizationLevel;
@@ -75,7 +76,7 @@ int main(int argc, const char **argv) {
         return 0;
     }
     LOGD("File Fine.");
-    ANTLRInputStream input(inputStream);
+    ANTLRInputStream  input(inputStream);
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 

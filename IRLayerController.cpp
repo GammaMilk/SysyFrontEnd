@@ -61,8 +61,37 @@ void IRCtrl::IRLayerController::push(const std::shared_ptr<IRVal>& val)
 {
     this->_layers[_layers.size() - 1].symbols.insert(std::make_pair(val->name, val));
 }
-std::shared_ptr<LocalVar> IRLayerController::queryLocal(const string& symbol_name, bool recursively)
+
+
+std::shared_ptr<IRVal> IRLayerController::queryLocal(
+    const string& symbol_name, const string& functionName, bool recursively
+)
 {
-    return std::dynamic_pointer_cast<LocalVar>(this->query(symbol_name, recursively));
+    for (int i = _layers.size() - 1; i > 0; i--) {
+        auto sy = _layers[i].symbols.find(symbol_name);
+        if (sy != _layers[i].symbols.end()) { return sy->second; }
+        if (!recursively) break;
+    }
+    // check global symbols for in-function;
+    auto idName = functionName + "." + symbol_name;
+    if (_layers.empty())
+        return nullptr;
+    else {
+        auto sy = _layers.front().symbols.find(idName);
+        if (sy == _layers.front().symbols.end())
+            return nullptr;
+        else
+            return sy->second;
+    }
 }
+void IRLayerController::pushGlobal(const shared_ptr<IRVal>& val)
+{
+    if (_layers.empty()) {
+        LOGE("ERROR no layers!");
+        return;
+    }
+    _layers.front().symbols[val->name] = val;
+}
+
+
 }   // namespace IRCtrl

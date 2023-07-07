@@ -102,18 +102,24 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
         r->isZero = true;
         return r;
     } else {
-        if (!iList->cVal.empty()) {
-            r->_childVals = iList->cVal;
-            return r;
-        } else {
-            // the most fuza no bufen
-            // first cut shape to shape[1:]
-            auto newShape = shape;
-            newShape.pop_front();
-            LOGD("new SHAPE size=" << newShape.size());
-            for (auto& x : iList->initList) {
-                auto t = buildAnCArrFromInitList(x, newShape);
-                r->_childArrs.emplace_back(std::move(t));
+        int pVal  = 0;
+        int pList = 0;
+        // Here 有可能有CVal，也有可能有initList.
+        for (int i = 0; i < shape.front(); i++) {
+            if (i < iList->which.size()) {
+                // Here we can detect which is the true value.
+                if (iList->which[i] == InitListVal::CVAL) {
+                    r->witch.emplace_back(CArr::CVAL);
+                    r->_childVals.emplace_back(iList->cVal[pVal++]);
+                } else {   // ILiST
+                    r->witch.emplace_back(CArr::CARR);
+                    auto newShape = shape;
+                    newShape.pop_front();
+                    auto t = buildAnCArrFromInitList(iList->initList[pList++], newShape);
+                    r->_childArrs.emplace_back(std::move(t));
+                }
+            } else {   // zero initialize.
+                r->witch.emplace_back(CArr::ZERO);
             }
         }
     }
@@ -163,36 +169,39 @@ string Utils::valTypeToStr(IRValType _t)
     }
 }
 
-    string Utils::floatTo64BitStr(float x) {
-        stringstream ss;
-        //    ss<<"0x"<<std::hex<<reinterpret_cast<uint32_t>(this->fVal);
-        // Method above was not allowed
-        // In LLVM-IR, a float is 64 bit.
-        double thisValue = x;
-        ss << "0x" << std::hex << *(uint64_t *) (&thisValue);
-        return ss.str();
+string Utils::floatTo64BitStr(float x)
+{
+    stringstream ss;
+    //    ss<<"0x"<<std::hex<<reinterpret_cast<uint32_t>(this->fVal);
+    // Method above was not allowed
+    // In LLVM-IR, a float is 64 bit.
+    double thisValue = x;
+    ss << "0x" << std::hex << *(uint64_t*)(&thisValue);
+    return ss.str();
+}
+
+std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal>& cVal)
+{
+    float  fInit    = 0;
+    int    iInit    = 0;
+    size_t position = 0;
+    auto   fValInit = std::dynamic_pointer_cast<FloatCVal>(cVal);
+    auto   iValInit = std::dynamic_pointer_cast<IntCVal>(cVal);
+    if (fValInit != nullptr) {
+        fInit    = fValInit->fVal;
+        iInit    = (int)fInit;
+        position = 1;
+    } else if (iValInit != nullptr) {
+        iInit    = iValInit->iVal;
+        fInit    = (float)iInit;
+        position = 2;
     }
 
-    std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal> &cVal) {
-        float fInit = 0;
-        int iInit = 0;
-        size_t position = 0;
-        auto fValInit = std::dynamic_pointer_cast<FloatCVal>(cVal);
-        auto iValInit = std::dynamic_pointer_cast<IntCVal>(cVal);
-        if (fValInit != nullptr) {
-            fInit = fValInit->fVal;
-            iInit = (int) fInit;
-            position = 1;
-        } else if (iValInit != nullptr) {
-            iInit = iValInit->iVal;
-            fInit = (float) iInit;
-            position = 2;
-        }
+    return {position, iInit, fInit};
+}
 
-        return {position, iInit, fInit};
-    }
 
-    template<class T1, class T2>
+template<class T1, class T2>
 T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)
 {
     switch (op) {

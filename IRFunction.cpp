@@ -21,12 +21,17 @@ string IRFunction::toString()
     // i32 %arg_0, [59 x i32]* %arg_1,
     size_t labelNum = 0;
     for (auto& t : this->_type.paramsType) {
-        ss << t->toString() << " %arg_" << labelNum << ",";
+        ss << t->toString() << " %arg_" << labelNum << ", ";
         labelNum += 1;
     }
+
+    // del the last ","
     if (labelNum != 0) {
         string s = ss.str();
-        if (!s.empty()) { s.pop_back(); }
+        if (!s.empty()) {
+            s.pop_back();
+            s.pop_back();
+        }
         ss.str("");
         ss << s;
     }
@@ -36,14 +41,31 @@ string IRFunction::toString()
     //    ss.clear();
     ss << ") {\n";
 
+    vector<unique_ptr<LocalSen>> allocas;
+
+    vector<unique_ptr<LocalSen>> notAllocas;
     // TODO func BBs
     for (auto& b : bbs) {
         ss << b->name << ":\n";
         for (auto& s : b->instructions) { ss << "    " << s->toString() << "\n"; }
-        ss << "\n";
-    }
+        //        for (auto& instruction : b->instructions) {
+        //            auto x = std::move(instruction);
+        //            if (x->getOp() == IROp::ALLOCA) {
+        //                allocas.emplace_back(std::move(x));
+        //            } else {
+        //                notAllocas.emplace_back(std::move(x));
+        //            }
+        //        }
+        //        for (auto& x : allocas) { ss << "    " << x->toString() << "\n"; }
+        //        for (auto& x : notAllocas) {
+        //            ss << "    " << x->toString() << "\n";
+        //            //        }
+        //            ss << "\n";
+        //        }
 
-    ss << "\n}";
-    return ss.str();
+        ss << "}\n";
+        return ss.str();
+    }
 }
+
 }   // namespace IRCtrl

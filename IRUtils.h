@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <memory>
 #include "IRVal.h"
+#include "IRSen.h"
 
 namespace IRCtrl
 {
@@ -36,7 +37,9 @@ public:
     /// 0=INVALID, 1=INT, 2=FLOAT
     /// \param cVal
     /// \return
-    static std::tuple<size_t, int, float> parseCVal(const shared_ptr<CVal> &cVal);
+    static std::tuple<size_t, int, float> parseCVal(const shared_ptr<CVal>& cVal);
+
+
 
 
 private:

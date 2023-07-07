@@ -98,6 +98,32 @@ string CArr::shapeString()
     for (auto& x : this->_shape) { ss << "]"; }
     return ss.str();
 }
+shared_ptr<CVal> CArr::access(const vector<int>& indices)
+{
+    auto* cur = this;
+    for (int i : indices) {
+        int pCarr = -1, pCVal = -1;
+        for (int j = 0; j <= i; j++) {
+            if (cur->witch[j] == CARR)
+                pCarr++;
+            else if (cur->witch[j] == CVAL)
+                pCVal++;
+        }
+        if (cur->witch[i] == ZERO) {
+            if (this->containedType == IRValType::Int) {
+                return make_shared<IntCVal>("", 0);
+            } else {
+                return make_shared<FloatCVal>("", 0);
+            }
+        } else if (cur->witch[i] == CARR) {
+            cur = cur->_childArrs[pCarr].get();
+            continue;
+        } else {   // CVAL
+            auto cv = cur->_childVals[pCVal];
+            return cv;
+        }
+    }
+}
 
 string IntVal::toString()
 {
@@ -170,18 +196,22 @@ string FPVar::toString()
         auto   fpArrType   = std::dynamic_pointer_cast<ArrayType>(this->fpType);
         string elemTypeStr = (fpArrType->innerType == IRValType::Float) ? "float" : "i32";
     }
+    // TODO
+    return ss.str();
 }
 
-    const SPType &FPVar::getFpType() const {
-        return fpType;
-    }
+const SPType& FPVar::getFpType() const
+{
+    return fpType;
+}
 
-    void FPVar::setFpType(const SPType &fpType) {
-        advancedType = fpType;
-        FPVar::fpType = fpType;
-    }
+void FPVar::setFpType(const SPType& fpType)
+{
+    advancedType  = fpType;
+    FPVar::fpType = fpType;
+}
 
-    string LocalInt::toString()
+string LocalInt::toString()
 {
     return std::string();
 }
@@ -190,15 +220,33 @@ string LocalFloat::toString()
     return std::string();
 }
 
-    string LocalBool::toString() {
-        return LocalInt::toString();
-    }
+string LocalBool::toString()
+{
+    return LocalInt::toString();
+}
 
-    SPType IRVal::getTrueAdvType() const {
-        if (this->advancedType != nullptr) {
-            return this->advancedType;
-        } else {
-            return makeType(this->type);
-        }
+SPType IRVal::getTrueAdvType() const
+{
+    if (this->advancedType != nullptr) {
+        return this->advancedType;
+    } else {
+        return makeType(this->type);
     }
+}
+const string& IRVal::getName() const
+{
+    return name;
+}
+void IRVal::setName(const string& name)
+{
+    IRVal::name = name;
+}
+const string& IRVal::getId() const
+{
+    return id;
+}
+void IRVal::setId(const string& id)
+{
+    IRVal::id = id;
+}
 }   // namespace IRCtrl

@@ -4,6 +4,7 @@
 
 #include "IRBuilder.h"
 #include "SysyParser.h"
+#include "IRLogger.h"
 #include <utility>
 #include <ostream>
 #include <sstream>
@@ -48,7 +49,7 @@ std::string IRCtrl::IRBuilder::build()
     // Functions
     for (auto& f : this->program->getFuncs()) { ss << f->toString() << "\n"; }
 
-    // TODO Var and IRFunction
+    // TODO Function Decl
     return ss.str();
 }
 
@@ -100,22 +101,71 @@ void IRBuilder::addIntoCurBB(UPLocalSen sen)
     this->thisFunction->curBB->add(std::move(sen));
 }
 
-    string IRBuilder::getNewLocalLabelStr() {
-        return "%" + std::to_string(this->getNewLabel());
-    }
+string IRBuilder::getNewLocalLabelStr()
+{
+    return "%" + std::to_string(this->getNewLabel());
+}
 
-    int IRBuilder::getLastLabel() const {
-        return this->_label;
-    }
+int IRBuilder::getLastLabel() const
+{
+    return this->_label;
+}
 
-    /// contains "%"
-    /// \return
-    string IRBuilder::getLastLocalLabelStr() {
-        return "%" + std::to_string(getLastLabel());
-    }
+/// contains "%"
+/// \return
+string IRBuilder::getLastLocalLabelStr() const
+{
+    return "%" + std::to_string(getLastLabel());
+}
 
-    const unique_ptr<LocalSen> &IRBuilder::getLastSen() const {
-        return getFunction()->curBB->instructions.back();
+const unique_ptr<LocalSen>& IRBuilder::getLastSen() const
+{
+    return getFunction()->curBB->instructions.back();
+}
+void IRBuilder::checkTypeAndCast(SPType src, SPType target, string sourceName)
+{
+    if (src->type == target->type) { return; }
+    if (src->type == IRValType::Float && target->type == IRValType::Int) {
+        auto sen =
+            MU<FpToSiSen>(this->getNewLocalLabelStr(), makeType(IRValType::Float), sourceName);
+        this->addIntoCurBB(std::move(sen));
+    } else if (src->type == IRValType::Int && target->type == IRValType::Float) {
+        auto sen = MU<SiToFpSen>(this->getNewLocalLabelStr(), makeType(IRValType::Int), sourceName);
+        this->addIntoCurBB(std::move(sen));
+    } else {
+        LOGE("!!! Cannot Check Type Not in FLOAT and INT !!!");
     }
+}
+const unique_ptr<LocalSen>& IRBuilder::addAdd(SPType t_, string v1, string v2)
+{
+    unique_ptr<BiSen> s;
+    if (t_->type == IRValType::Float) {
+        s = MU<BiSen>(getNewLocalLabelStr(), IROp::FADD, v1, t_, v2);
+    } else {
+        s = MU<BiSen>(getNewLocalLabelStr(), IROp::ADD, v1, t_, v2);
+    }
+    addIntoCurBB(std::move(s));
+    return getLastSen();
+}
+const unique_ptr<LocalSen>& IRBuilder::addSub(SPType t_, string v1, string v2)
+{
+    auto s = MU<BiSen>(getNewLocalLabelStr(), IROp::SUB, v1, t_, v2);
+    addIntoCurBB(std::move(s));
+    return getLastSen();
+}
+void IRBuilder::checkTypeAndCast(IRValType src, IRValType target, string sourceName)
+{
+    if (src == target) { return; }
+    if (src == IRValType::Float && target == IRValType::Int) {
+        auto sen =
+            MU<FpToSiSen>(this->getNewLocalLabelStr(), makeType(IRValType::Float), sourceName);
+        this->addIntoCurBB(std::move(sen));
+    } else if (src == IRValType::Int && target == IRValType::Float) {
+        auto sen = MU<SiToFpSen>(this->getNewLocalLabelStr(), makeType(IRValType::Int), sourceName);
+        this->addIntoCurBB(std::move(sen));
+    } else {
+        LOGE("!!! Cannot Check Type Not in FLOAT and INT !!!");
+    }
+}
 
 }   // namespace IRCtrl

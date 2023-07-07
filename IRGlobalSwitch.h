@@ -18,6 +18,8 @@ public:
     virtual void dive()   = 0;
     virtual void ascend() = 0;
 
+    virtual IRSwitch& operator=(T x) = 0;
+
     virtual void set(T) = 0;
 
     virtual T get() = 0;
@@ -26,25 +28,32 @@ public:
 class IRBoolSwitch : public IRSwitch<bool>
 {
 public:
-    explicit IRBoolSwitch(string name) : _name(std::move(name)) {
-        LOGD("Constructed IRBoolSwitch");
-    };
+    IRBoolSwitch& operator=(bool x) override
+    {
+        set(x);
+        return *this;
+    }
+
+public:
+    explicit IRBoolSwitch(string name)
+        : _name(std::move(name)){
+              //        LOGD("Constructed IRBoolSwitch");
+          };
 
     explicit IRBoolSwitch(bool init)
         : _cur(init)
     {
     }
 
-    void dive() override {
+    void dive() override
+    {
         if (_name == "isConst") {
-            LOGD("CONST DIVE " << _stack.size() << _name);
-
+            //            LOGD("CONST DIVE " << _stack.size() << _name);
         }
         _stack.push(_cur);
         if (_name == "isConst") {
-            LOGD("CONST DIVE" << _stack.size());
+            //            LOGD("CONST DIVE" << _stack.size());
         }
-
     }
 
     void dive(bool x)
@@ -55,21 +64,23 @@ public:
 
     void set(bool t) override { _cur = t; }
 
-    void ascend() override {
+    void ascend() override
+    {
         _cur = _stack.top();
         _stack.pop();
         if (_name == "isConst") {
-            LOGD("CONST ascend" << _stack.size() << _name);
-
+            //            LOGD("CONST ascend" << _stack.size() << _name);
         }
     }
 
     bool get() override { return _cur; }
 
+    explicit operator bool() const { return _cur; }
+
 private:
     std::stack<bool> _stack;
     bool             _cur = false;
-    string _name;
+    string           _name;
 };
 
 class IRGlobalSwitch
@@ -80,9 +91,13 @@ public:
     IRBoolSwitch needLoad;
     IRBoolSwitch isCVal;
 
-    IRGlobalSwitch() :
-            isConst(std::string("isConst")), isInFunc(std::string("inFUnc")), needLoad(std::string("needLoad")),
-            isCVal(std::string("isCVal")) {}
+    IRGlobalSwitch()
+        : isConst(std::string("isConst"))
+        , isInFunc(std::string("inFUnc"))
+        , needLoad(std::string("needLoad"))
+        , isCVal(std::string("isCVal"))
+    {
+    }
 };
 }   // namespace IRCtrl
 
