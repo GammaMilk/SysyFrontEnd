@@ -205,10 +205,11 @@ const SPType& FPVar::getFpType() const
     return fpType;
 }
 
-void FPVar::setFpType(const SPType& fpType)
+void FPVar::setFpType(const SPType& fpType_)
 {
-    advancedType  = fpType;
-    FPVar::fpType = fpType;
+    advancedType  = fpType_;
+    FPVar::fpType = fpType_;
+    type=fpType_->type;
 }
 
 string LocalInt::toString()

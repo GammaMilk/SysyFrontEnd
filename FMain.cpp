@@ -45,17 +45,15 @@ int main(int argc, const char** argv)
         std::string arg(argv[i]);
 
         if (arg == "-S") {
-            // 处理 -S 参数
         } else if (arg == "-o") {
             if (i + 1 < argc) {
                 outputFile = argv[i + 1];
-                ++i;   // 跳过下一个参数
+                ++i;
             } else {
-                std::cerr << "缺少输出文件名" << std::endl;
+                std::cerr << "No output filename" << std::endl;
                 return 1;
             }
         } else if (arg == "-O1") {
-            // 处理 -O1 参数
         } else {
             inputFile = arg;
         }
@@ -80,11 +78,7 @@ int main(int argc, const char** argv)
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 
-    tokens.fill();
-    for (auto token : tokens.getTokens()) {
-        //        LOGD(token->toString());
-    }
-
+//    tokens.fill();
     SysyParser                   parser(&tokens);
     SysyParser::CompUnitContext* tree = parser.compUnit();
 

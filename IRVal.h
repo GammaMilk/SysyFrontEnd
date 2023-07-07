@@ -318,7 +318,7 @@ public:
 
     [[nodiscard]] const SPType& getFpType() const;
 
-    void setFpType(const SPType& fpType);
+    void setFpType(const SPType& fpType_);
 };
 using SPFPVar = shared_ptr<FPVar>;
 

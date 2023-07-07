@@ -44,10 +44,10 @@ public:
     // tools
     void checkTypeAndCast(SPType src, SPType target, string sourceName);
     /// Do a cast if type not eq or do nothing
-    /// \param src source type
-    /// \param target target type
-    /// \param sourceName source name
-    void checkTypeAndCast(IRValType src, IRValType target, string sourceName);
+    /// \param from source type
+    /// \param to target type
+    /// \param from_name source name
+    void checkTypeAndCast(IRValType from, IRValType to, string from_name);
 
 
     // AddInstuctions into the builder.

@@ -238,18 +238,35 @@ protected:
 class GepSen : public LocalSen
 {
 public:
-    GepSen(SPType t_, vector<int> offset_)
-        : t(std::move(t_))
-        , offset(std::move(offset_))
+    GepSen(string  outLabel_,SPType t_, string source_, vector<size_t> offset_)
+        : t(std::move(t_)),sourceName(std::move(source_)),outLabel(std::move(outLabel_))
+        , offset(offset_)
     {
     }
     string toString() override;
 
 protected:
     SPType      t;
-    vector<int> offset;
+    vector<size_t> offset;
+    string outLabel;
+    string sourceName;
 };
 
+// declare void @llvm.memset.p0.i32(ptr, i8, i32, i1)
+class Memset: public LocalSen {
+public:
+    Memset(string retLabel_, string sourceLabel, shared_ptr<IRType> pt_, unsigned char x_, int bytes_):
+    pt(std::move(pt_)),sourceName(std::move(sourceLabel)),
+        x(x_), bytes(bytes_){_label=std::move(retLabel_);}
+protected:
+    shared_ptr<IRType> pt;
+    unsigned char x;
+    int bytes;
+    string sourceName;
+
+public:
+    string toString() override;
+};
 
 // tool functions:
 static string opToStr(IROp op_);

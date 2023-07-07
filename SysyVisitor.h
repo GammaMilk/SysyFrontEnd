@@ -283,7 +283,14 @@ public:
 
     std::any visitLOrExp_(SysyParser::LOrExp_Context* context) override;
 
-private:
     IRCtrl::IRValType curBType;
     bool              hasArrayAccessed = false;
+
+    // only for local array def.
+    std::vector<size_t> curShape;
+    std::vector<size_t> curArrayPos;
+    size_t curArrayDim;
+    string curArrId;
+    shared_ptr<IRCtrl::IRType> curArrType;
+    // end  for local array def
 };

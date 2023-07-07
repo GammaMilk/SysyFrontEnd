@@ -140,6 +140,7 @@ public:
     }
 
     SPType targetType;
+    [[nodiscard]] const SPType& getTargetType() const;
 
     string toString() override;
 };

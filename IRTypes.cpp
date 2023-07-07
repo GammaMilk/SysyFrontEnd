@@ -57,7 +57,7 @@ SPType makePointer(const SPType& _t, size_t stars)
     return pointer;
 }
 
-SPType IRCtrl::makePointer(const SPType& _t)
+SPType makePointer(const SPType& _t)
 {
     return makePointer(_t, 1);
 }
@@ -65,6 +65,10 @@ SPType IRCtrl::makePointer(const SPType& _t)
 string PointerType::toString()
 {
     return this->targetType->toString() + "*";
+}
+const SPType& PointerType::getTargetType() const
+{
+    return targetType;
 }
 string BoolType::toString()
 {

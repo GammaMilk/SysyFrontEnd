@@ -147,11 +147,27 @@ string opToStr(IROp op_)
 }
 
 /// getelementptr <TYPE>, <TYPE>* <POINTER>, i32 <OFFSET>, ...
+// getelementptr [10 x [3 x float]], [10 x [3 x float]]* %v5, i32 0, i32 0, i32 0
 /// \return
 string GepSen::toString()
 {
     stringstream ss;
-
+    ss<<outLabel<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
+    ss<<", i32 0";
+    for(auto x:offset) {
+        ss<<", i32 "<<x;
+    }
+    return ss.str();
+}
+string Memset::toString()
+{
+    /*
+     *  %v6 = bitcast [10 x [3 x float]]* %v5 to i32*
+        call void @llvm.memset.p0.i32(i32* %v6, i8 0, i32 120, i1 false)
+     */
+    stringstream ss;
+    ss<<_label<<" = bitcast "<<this->pt->toString()<<" " <<sourceName<<" to i32*\n";
+    ss<<"    call void @llvm.memset.p0.i32(i32* "<<_label<<", i8 "<<int(x)<<", i32 "<<bytes<<", i1 false)";
     return ss.str();
 }
 }   // namespace IRCtrl

@@ -28,6 +28,7 @@ std::string IRCtrl::IRBuilder::build()
 
     // Other Info about file
     ss << "; Filename = " << this->_filename << "\n";
+    ss<<"declare void @llvm.memset.p0.i32(i32*, i8, i32, i1)\n";
     for (auto& one : _stmts) {
         ss << one;
         ss << '\n';
@@ -153,15 +154,15 @@ const unique_ptr<LocalSen>& IRBuilder::addSub(SPType t_, string v1, string v2)
     addIntoCurBB(std::move(s));
     return getLastSen();
 }
-void IRBuilder::checkTypeAndCast(IRValType src, IRValType target, string sourceName)
+void IRBuilder::checkTypeAndCast(IRValType from, IRValType to, string from_name)
 {
-    if (src == target) { return; }
-    if (src == IRValType::Float && target == IRValType::Int) {
+    if (from == to) { return; }
+    if (from == IRValType::Float && to == IRValType::Int) {
         auto sen =
-            MU<FpToSiSen>(this->getNewLocalLabelStr(), makeType(IRValType::Float), sourceName);
+            MU<FpToSiSen>(this->getNewLocalLabelStr(), makeType(IRValType::Float), from_name);
         this->addIntoCurBB(std::move(sen));
-    } else if (src == IRValType::Int && target == IRValType::Float) {
-        auto sen = MU<SiToFpSen>(this->getNewLocalLabelStr(), makeType(IRValType::Int), sourceName);
+    } else if (from == IRValType::Int && to == IRValType::Float) {
+        auto sen = MU<SiToFpSen>(this->getNewLocalLabelStr(), makeType(IRValType::Int), from_name);
         this->addIntoCurBB(std::move(sen));
     } else {
         LOGE("!!! Cannot Check Type Not in FLOAT and INT !!!");
