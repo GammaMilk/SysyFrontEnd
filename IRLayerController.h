@@ -37,8 +37,10 @@ public:
 
     //    std::shared_ptr<LocalVar> queryLocal(const std::string& symbol_name, bool recursively =
     //    true);
-    std::shared_ptr<IRVal> queryLocal(
-        const std::string& symbol_name, const std::string& functionName, bool recursively = true
+    std::shared_ptr<IRVal> queryLocal(const string& symbol_name, bool recursively = true);
+
+    std::shared_ptr<IRVal> queryLocalConst(
+        const std::string& symbol_name, const std::string& functionName
     );
 
 private:

@@ -58,7 +58,7 @@ private:
     // Here stmts only means other stmt(other than function, var, const)
     std::vector<std::string>    _stmts;
     std::string                 _filename;
-    int                         _label = 1000;
+    int                         _label = -1;
     std::shared_ptr<IRProgram>  program;
     std::shared_ptr<IRFunction> thisFunction;
 

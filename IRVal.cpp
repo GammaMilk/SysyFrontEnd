@@ -53,28 +53,90 @@ size_t InitListVal::dim() const
     for (auto& x : initList) { maxDim = std::max(maxDim, x->dim()); }
     return maxDim + 1;
 }
+string CArr::shapeString(IRValType containedType_, const std::deque<size_t>& shape_)
+{
+    stringstream ss;
+    // returns like [3 x [3 x i32]]
+    // a 3 dimensional array likes [5 x [3 x [3 x i32]]]
+    // this->_shape = {3,3} (vector<size_t>)
+    // element type is i32 or float
+    string elementTypeString = (containedType_ == IRValType::Float) ? "float" : "i32";
+
+    for (auto& x : shape_) { ss << "[" << x << " x "; }
+    ss << elementTypeString;
+    for (auto& x : shape_) { ss << "]"; }
+    return ss.str();
+}
+string fillZero(std::deque<size_t> sh, const shared_ptr<CVal>& cv, IRValType t){
+    stringstream ss;
+    string elementTypeStr = t==IRValType::Float?"float":"i32";
+    if(sh.empty()){
+        ss<<elementTypeStr<<" "<<cv->toString();
+        return ss.str();
+    } else if (sh.size()==1) {
+        ss<<CArr::shapeString(t,sh)<<" ";
+        ss<<"[";
+        ss<<elementTypeStr<<" "<<cv->toString();
+        for(auto i=1;i<sh.front();i++) {
+            ss<<", "<<elementTypeStr<<" 0";
+        }
+        ss<<"]";
+        return ss.str();
+    } else {
+        // multiple dims
+        ss<<CArr::shapeString(t,sh)<<" ";
+        auto curDim = sh.front();
+        sh.pop_front();
+        ss<<fillZero(sh, cv,t);
+        for(auto i=1;i<curDim;i++) {
+            ss<<", "<<CArr::shapeString(t,sh)<<" ";
+            ss<<"zeroinitializer";
+        }
+        sh.push_front(curDim);
+        return ss.str();
+    }
+}
 string CArr::toString()
 {
     stringstream ss;
     string       elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
     // [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] zeroinitializer, [3 x i32]
     // zeroinitializer]
-    ss << shapeString();
+    ss << shapeString(this->containedType, this->_shape);
     if (this->isZero) {
         ss << " zeroinitializer";
         return ss.str();
     }
     ss << " [";
-    // vector<shared_ptr<CArr>> _childArrs;
-    // vector<shared_ptr<CVal>> _childVals;
-    if (!this->_childArrs.empty()) {
-        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
-    }
-    if (!this->_childVals.empty()) {
-        for (auto& x : this->_childVals) {
-            ss << elementTypeString << " " << x->toString() << ", ";
+    int pArr=-1,pVal=-1;
+    for(auto ty:witch) {
+        if(ty==CARR) {
+            pArr+=1;
+            // arr, recursive
+            ss<<_childArrs[pArr]->toString()<<", ";
+        } else if (ty==ZERO) {
+            // zero or zeroinitializer
+            size_t i = _shape.front();
+            _shape.pop_front();
+            ss<<shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+            _shape.push_front(i);
+        } else {
+            pVal+=1;
+            // cval. output its value or init another array?
+            size_t i = _shape.front();
+            _shape.pop_front();
+            ss<<fillZero(_shape,_childVals[pVal], this->containedType)<<", ";
+            _shape.push_front(i);
         }
     }
+//    if (!this->_childArrs.empty()) {
+//        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
+//    }
+//    if (!this->_childVals.empty()) {
+//        for (auto& x : this->_childVals) {
+//            ss << elementTypeString << " " << x->toString() << ", ";
+//        }
+//    }
     // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
     // So we need to remove it.
     string s = ss.str();
@@ -84,20 +146,7 @@ string CArr::toString()
     LOGD(s);
     return s;
 }
-string CArr::shapeString()
-{
-    stringstream ss;
-    // returns like [3 x [3 x i32]]
-    // a 3 dimensional array likes [5 x [3 x [3 x i32]]]
-    // this->_shape = {3,3} (vector<size_t>)
-    // element type is i32 or float
-    string elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
 
-    for (auto& x : this->_shape) { ss << "[" << x << " x "; }
-    ss << elementTypeString;
-    for (auto& x : this->_shape) { ss << "]"; }
-    return ss.str();
-}
 shared_ptr<CVal> CArr::access(const vector<int>& indices)
 {
     auto* cur = this;
@@ -123,6 +172,17 @@ shared_ptr<CVal> CArr::access(const vector<int>& indices)
             return cv;
         }
     }
+    // you have not return yet.
+    // wtf, u r accessing a incomplete arr shape. you must want to pass the pointer to another function.
+    // so how should we do? return 0? no,no,no. we must store this state into a FLAG.
+    // Someone who reach this flag, and she would plug-out this FLAG.
+
+    // on the other way, one who want to access an array, she has to check shape had been matched.
+
+}
+[[maybe_unused]] string CArr::shapeString()
+{
+    return shapeString(this->containedType, this->_shape);
 }
 
 string IntVal::toString()
@@ -145,7 +205,7 @@ string VArr::toString()
     string       elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
     // [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] zeroinitializer, [3 x i32]
     // zeroinitializer]
-    ss << shapeString();
+    ss << CArr::shapeString(containedType, _shape);
     if (this->isZero) {
         ss << " zeroinitializer";
         return ss.str();
@@ -172,17 +232,7 @@ string VArr::toString()
 }
 string VArr::shapeString()
 {
-    stringstream ss;
-    // returns like [3 x [3 x i32]]
-    // a 3 dimensional array likes [5 x [3 x [3 x i32]]]
-    // this->_shape = {3,3} (vector<size_t>)
-    // element type is i32 or float
-    string elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
-
-    for (auto& x : this->_shape) { ss << "[" << x << " x "; }
-    ss << elementTypeString;
-    for (auto& x : this->_shape) { ss << "]"; }
-    return ss.str();
+    return CArr::shapeString(this->containedType, this->_shape);
 }
 string FPVar::toString()
 {

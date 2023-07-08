@@ -33,6 +33,8 @@ public:
 
     static string floatTo64BitStr(float x);
 
+    static string localConstName(const string& functionName, const string& idName);
+
     /// parse a CVal to it's oringle like. first position is:
     /// 0=INVALID, 1=INT, 2=FLOAT
     /// \param cVal

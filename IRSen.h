@@ -238,9 +238,14 @@ protected:
 class GepSen : public LocalSen
 {
 public:
-    GepSen(string  outLabel_,SPType t_, string source_, vector<size_t> offset_)
+    GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_)
         : t(std::move(t_)),sourceName(std::move(source_)),outLabel(std::move(outLabel_))
         , offset(offset_)
+    {
+    }
+    GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_, bool dr)
+        : t(std::move(t_)),sourceName(std::move(source_)),outLabel(std::move(outLabel_))
+        , offset(offset_), dimensionality_reduction(dr)
     {
     }
     string toString() override;
@@ -250,6 +255,7 @@ protected:
     vector<size_t> offset;
     string outLabel;
     string sourceName;
+    bool dimensionality_reduction = false;
 };
 
 // declare void @llvm.memset.p0.i32(ptr, i8, i32, i1)

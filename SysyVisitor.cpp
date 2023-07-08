@@ -33,7 +33,7 @@ std::tuple<IRValType, string> getLastValue(std::any aVal)
     if (aVal.type() == typeid(shared_ptr<CVal>)) {
         auto irval = ACS(CVal, aVal);
         return {irval->type, irval->toString()};
-    } else if (aVal.type()==typeid(int)) {
+    } else if (aVal.type()==typeid(int) && std::any_cast<int>(aVal) == 0x7de6543d) {
         return {IRValType::Unknown, ""};
     } else {
         auto& lastSen = g_builder->getLastSen();
@@ -164,8 +164,10 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 } else {
                     // local const int
                     string funcName         = g_builder->getFunction()->name;
-                    string localConstIdName = funcName + "." + idName;
+//                    string  = funcName + "." + idName;
+                    auto localConstIdName=Utils::localConstName(funcName, idName);
                     // Can we init like this way???
+
                     auto thisIntConstVal = std::make_shared<IntCVal>(localConstIdName, num);
                     g_lc->pushGlobal(thisIntConstVal);
                     g_builder->getProgram()->addGlobalConst(thisIntConstVal);
@@ -184,7 +186,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 } else {
                     // local const int
                     string funcName         = g_builder->getFunction()->name;
-                    string localConstIdName = funcName + "." + idName;
+                    auto localConstIdName=Utils::localConstName(funcName, idName);
                     // Can we init like this way???
                     auto thisIntConstVal = std::make_shared<FloatCVal>(localConstIdName, num);
                     g_lc->pushGlobal(thisIntConstVal);
@@ -221,7 +223,7 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 // TODO local CONST val array
                 shared_ptr<CArr> thisArr;
                 string funcName = g_builder->getFunction()->name;
-                string thisArrGlobalName = funcName+"."+idName;
+                auto thisArrGlobalName=Utils::localConstName(funcName, idName);
                 thisArr       = Utils::buildAnCArrFromInitList(iList, shape);
                 thisArr->name = thisArrGlobalName;
                 thisArr->id=thisArrGlobalName;
@@ -334,6 +336,7 @@ std::any GlobalVarDef(SysyParser::VarDefContext* context, Visitor* this_)
         iList->contained = this_->curBType;
         auto thisArr     = Utils::buildAnVArrFromInitList(iList, shape);
         thisArr->name    = idName;
+        thisArr->advancedType = make_shared<ArrayType>(this_->curBType, vector<size_t>(shape.begin(), shape.end()));
         g_lc->push(thisArr);
         g_builder->getProgram()->addGlobalVar(thisArr);
     }
@@ -358,7 +361,6 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
     if (g_lc->isInGlobal()) {
         return GlobalVarDef(context, this);
     }
-    // TODO local define like local int/float id([])* (= ?)?
     else {
         g_enable_log = true;
         LOGD("Local Var name == " << idName << ",  type = " << Utils::valTypeToStr(type));
@@ -411,8 +413,12 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
             }
 
         } else {
-            // local Array
-            // not_const float/int a[][][][] (= ?)?
+            /*
+             *   _                 _     _                      _                    _
+                | |   ___  __ __ _| |   /_\  _ _ _ _   _ _  ___| |_   __ ___ _ _  __| |_
+                | |__/ _ \/ _/ _` | |  / _ \| '_| '_| | ' \/ _ \  _| / _/ _ \ ' \(_-<  _|
+                |____\___/\__\__,_|_| /_/ \_\_| |_|   |_||_\___/\__| \__\___/_||_/__/\__|
+             */
 
             // Array 1 : deal with shape
             g_sw->isConst.dive(true);
@@ -439,6 +445,7 @@ std::any Visitor::visitVarDef(SysyParser::VarDefContext* context)
             iList            = make_shared<InitListVal>();
             iList->contained = this->curBType;
             auto thisArr     = Utils::buildAnVArrFromInitList(iList, shape);
+            thisArr->advancedType=arrType;
             thisArr->name    = idName;
             thisArr->id=newLabelS;
             g_lc->push(thisArr);
@@ -538,7 +545,7 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
             auto [type, lastId]    = getLastValue(accept);
             if (type == IRCtrl::IRValType::Unknown) {
                 // TODO this branch is InitList.
-                if(curArrayPos[curArrayDim]<=thisDimBefore) {
+                if(curArrayPos[curArrayDim]==thisDimBefore) {
                     ArrayPosPlusN(curShape, curArrayPos,1,curArrayDim);
                 }
             } else {
@@ -563,7 +570,7 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
             }
         }
     }
-    return 0;
+    return 0x7de6543d;
 }
 
 /// funcDef: funcType Ident Lparen funcFParams? Rparen block;
@@ -820,9 +827,15 @@ std::any Visitor::visitAssign(SysyParser::AssignContext* context)
     return 0;
 }
 
+/// 	| exp? Semicolon							# exprStmt
+/// \param context
+/// \return
 std::any Visitor::visitExprStmt(SysyParser::ExprStmtContext* context)
 {
-    return 0;
+    if(context->exp()!= nullptr) {
+        return context->exp()->accept(this);
+    }
+    return 0x11451419;
 }
 
 std::any Visitor::visitBlockStmt(SysyParser::BlockStmtContext* context)
@@ -925,22 +938,36 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
         // Const, we need to actually calc the true value
         // First of all, we must check if the val is array.
 
-        string name = context->Ident()->getText();
+        string idName = context->Ident()->getText();
         if (context->exp().empty()) {
-            const shared_ptr<IRVal>& query = g_lc->query(name, false);
-            auto                     val   = std::dynamic_pointer_cast<CVal>(query);
-            return val;
+            // 1. query local const first.
+            shared_ptr<IRVal> t  = g_lc->queryLocal(idName);
+            if (t == nullptr) {
+                // 2. query global.
+                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+                if(t== nullptr) t=g_lc->query(idName);
+                assert(t != nullptr);
+            }
+            g_sw->isCVal= true;
+            return DPC(CVal, t);
         } else {
+            // 3. deal with const array
             std::vector<int> indices;
             for (auto& e : context->exp()) {
                 auto c              = e->accept(this);
                 auto [_1, iVal, _2] = Utils::parseCVal(ACS(CVal, c));
                 indices.emplace_back(iVal);
             }
-            auto qRes = g_lc->query(name, true);
-            assert(qRes != nullptr);
-            auto cv   = DPC(CArr, qRes);
+            shared_ptr<IRVal> t  = g_lc->queryLocal(idName);
+            if (t == nullptr) {
+                // 2. query global.
+                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+                if(t== nullptr) t=g_lc->query(idName);
+                assert(t != nullptr);
+            }
+            auto cv   = DPC(CArr, t);
             auto cVal = cv->access(indices);
+            g_sw->isCVal= true;
             return cVal;
         }
     } else {
@@ -949,69 +976,152 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
         LOGD("lVal idName=" << idName);
         string            sourceId;
         bool              isLocal = true;
-        shared_ptr<IRVal> t       = g_lc->queryLocal(idName, g_builder->getFunction()->name);
+        shared_ptr<IRVal> t       = g_lc->queryLocal(idName);
         if (t == nullptr) {
             // query global.
-            t = g_lc->query(idName);
-            assert(t != nullptr);
+            t = g_lc->queryLocalConst(idName,g_builder->getFunction()->name);
+            if (t== nullptr) t=g_lc->query(idName);
             isLocal  = false;
             sourceId = "@" + t->name;
         } else {
             sourceId = t->id;
         }
         // if is array, need to get the element.
-        // need load the exact value from memory?
-        // TODO LOAD ARRAY
         if (g_sw->needLoad.get()) {
             g_sw->isCVal = false;
             // (1) on arrays.
             auto vArr = DPC(VArr, t);
             auto cArr = DPC(CArr, t);
             auto fpVar = DPC(FPVar,t);
-            if(fpVar) {
-                if(fpVar->type==IRCtrl::IRValType::Int||fpVar->type==IRCtrl::IRValType::Float) {
-                    goto single_lvar; // why use goto???
-                }
+            std::vector<size_t> shape;
+
+            // Array 1 : deal with shape
+            for (auto& e : context->exp()) {
+                auto   a          = e->accept(this);
+                auto [_,i,____] = Utils::parseCVal(ACS(CVal, a));
+                size_t thisDimSize = i;
+                shape.emplace_back(thisDimSize);
             }
-            if (vArr || cArr) {
-                // Array 1 : deal with shape
-                std::deque<size_t> shape;
-                for (auto& e : context->exp()) {
-                    auto   a          = e->accept(this);
-                    auto   number_val = std::any_cast<std::shared_ptr<CVal>>(a);
-                    auto   int_val    = std::dynamic_pointer_cast<IntCVal>(number_val);
-                    auto   float_val  = std::dynamic_pointer_cast<FloatCVal>(number_val);
-                    size_t thisDimSize =
-                        (int_val != nullptr) ? int_val->iVal : (size_t)float_val->fVal;
-                    shape.emplace_back(thisDimSize);
-                }
+            // the shape really match a terminal element on an array???
+            // In sysylex, "const int[]" won't be passed by function args. so we needn't deal
+            // with that in-ordinary thing.
+
+            // varr or carr
+            if (vArr || cArr || (fpVar&&fpVar->type==IRCtrl::IRValType::Arr)) {
                 if (cArr) {
+                    // no need to check if you idiot are accessing a const string.
                     vector<int> shape_(shape.begin(), shape.end());
                     g_sw->isCVal = true;
                     return cArr->access(shape_);
                 } else if (vArr) {
-                    // local varr / global varr (the same way.)
+                    // check terminal?
+                    if(vArr->_shape.size()==shape.size()) {
+                        // local varr / global varr (the same way.)
+                        // get element ptr
+                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),vArr->id, shape);
+                        gepSen->_retType = makeType(vArr->containedType);
+                        auto gepLabel =g_builder->getLastLocalLabelStr();
+                        // load from ptr
+                        auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(vArr->containedType),gepLabel);
+                        g_builder->addIntoCurBB(std::move(gepSen));
+                        g_builder->addIntoCurBB(std::move(loadSen));
+                        g_sw->isCVal=false;
+                        return 0;
+                    }
+                    // not the terminal node.
+                    else {
+                        // TODO:
+                        if(shape.empty()) {
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, std::vector<size_t>{0});
+                            gepSen->_retType = makeType(vArr->containedType);
+                            auto gepLabel =g_builder->getLastLocalLabelStr();
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
+                        // get element ptr
+                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, shape);
+                        gepSen->_retType = makeType(vArr->containedType);
+                        auto gepLabel =g_builder->getLastLocalLabelStr();
+                        g_builder->addIntoCurBB(std::move(gepSen));
+
+                        auto newArrTypeTmp = MS<ArrayType>(*DPC(ArrayType, vArr->getTrueAdvType()));
+                        auto n2 = std::deque<int>(newArrTypeTmp->innerShape.begin(), newArrTypeTmp->innerShape.end());
+                        for(auto i=0;i<shape.size();i++) n2.pop_front();
+                        newArrTypeTmp->innerShape=vector<size_t>(n2.begin(),n2.end());
+
+                        auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),newArrTypeTmp,gepLabel, vector<size_t>{0});
+                        gepSen2->_retType = makeType(vArr->containedType);
+                        auto gepLabel2 =g_builder->getLastLocalLabelStr();
+                        g_builder->addIntoCurBB(std::move(gepSen2));
+
+                        g_sw->isCVal= false;
+                        return 0;
+                    }
+                } // on fpvar array.
+                else if(fpVar&&fpVar->type==IRCtrl::IRValType::Arr) {
+                    auto fpArrType = DPC(ArrayType, fpVar->fpType);
+                    // terminal node, directly to the ass.
+                    if(fpArrType->innerShape.size()==shape.size()) {
+                        // 2 steps load like this
+                        /*
+                         *  %v3 = load [2 x i32]*, [2 x i32]** %v1
+                            %v4 = getelementptr [2 x i32], [2 x i32]* %v3, i32 4, i32 1
+                            %v5 = load i32, i32* %v4
+                         */
+                        auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                        g_builder->addIntoCurBB(std::move(loadSen1));
+                        auto s1Label = g_builder->getLastLocalLabelStr();
+
+                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
+                        g_builder->addIntoCurBB(std::move(gepSen));
+                        auto s2Label = g_builder->getLastLocalLabelStr();
+
+                        auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(IRCtrl::IRValType::Int), s2Label);
+                        g_builder->addIntoCurBB(std::move(loadSen));
+                        g_sw->isCVal=false;
+                        return 0;
+                    }
+                    // not the terminal... fuck!!!!!
+                    else {
+                        // 0. no shape requested, just load and return.
+                        if(shape.empty()) {
+                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                            g_builder->addIntoCurBB(std::move(loadSen1));
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
+
+                        // 1. the same way load from alloca.
+                        // %v3 = load [8 x i32]*, [8 x i32]** %v1
+                        auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                        g_builder->addIntoCurBB(std::move(loadSen1));
+                        auto s1Label = g_builder->getLastLocalLabelStr();
+
+                        // 2. gep the var but not completely.
+                        // %v4 = getelementptr [8 x i32], [8 x i32]* %v3, i32 1
+                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
+                        g_builder->addIntoCurBB(std::move(gepSen));
+                        auto s2Label = g_builder->getLastLocalLabelStr();
+
+                        // 3. another gep, but pass 0,0
+                        // %v5 = getelementptr [8 x i32], [8 x i32]* %v4, i32 0, i32 0
+                        auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s2Label,vector<size_t>({0,0}), true);
+                        g_builder->addIntoCurBB(std::move(gepSen2));
+                        auto s3Label = g_builder->getLastLocalLabelStr();
+
+                        g_sw->isCVal=false;
+                        return 0;
+                    }
                 }
-            }
-            // on fpvar array.
-            else if(fpVar&&fpVar->type==IRCtrl::IRValType::Arr) {
-                // 2 steps load like this
-                /*
-                 *  %v3 = load [2 x i32]*, [2 x i32]** %v1
-                    %v4 = getelementptr [2 x i32], [2 x i32]* %v3, i32 4, i32 1
-                    %v5 = load i32, i32* %v4
-                 */
-                LOGD("FP Arr");
             }
             // else on single variable.
             else {
-                single_lvar:
                 unique_ptr<LocalSen> s =
                     MU<LoadSen>(g_builder->getNewLocalLabelStr(), t->getTrueAdvType(), sourceId);
                 g_builder->addIntoCurBB(std::move(s));
             }
         }
-        // TODO.
         return t;
     }
     return 0;
@@ -1103,8 +1213,16 @@ std::any Visitor::visitUnaryExp_(SysyParser::UnaryExp_Context* context)
     return context->primaryExp()->accept(this);
 }
 
+/// Ident Lparen funcRParams? Rparen	# call
+/// \param context
+/// \return
 std::any Visitor::visitCall(SysyParser::CallContext* context)
 {
+    string idName = context->Ident()->getText();
+    // TODO parse funcrparams.
+    if(context->funcRParams()!= nullptr) {
+        context->funcRParams()->accept(this);
+    }
     return 0;
 }
 
@@ -1139,13 +1257,26 @@ std::any Visitor::visitStringConst(SysyParser::StringConstContext* context)
     return 0;
 }
 
+/// funcRParam: exp | stringConst;
+/// \param context
+/// \return exp.accept
 std::any Visitor::visitFuncRParam(SysyParser::FuncRParamContext* context)
 {
-    return 0;
+    // Here stringConst was ignored.
+    // FINAL
+    return context->exp()->accept(this);
 }
 
+/// funcRParams: funcRParam (Comma funcRParam)*;
+//  note: funcRParam: exp
+/// \param context
+/// \return
 std::any Visitor::visitFuncRParams(SysyParser::FuncRParamsContext* context)
 {
+    // TODO visitFuncRParams
+    for(auto r:context->funcRParam()) {
+        r->accept(this);
+    }
     return 0;
 }
 
@@ -1255,15 +1386,37 @@ std::any Visitor::visitAdd(SysyParser::AddContext* context)
         g_sw->isCVal = true;
         return res;
     } else {
-        //        TODO
+        IRValType lt;
+        string ls;
+        IRValType rt;
+        string rs;
+
         bool isCVal[2];
         auto lav  = context->addExp()->accept(this);
         isCVal[0] = g_sw->isCVal.get();
         auto& lvs = g_builder->getLastSen();
 
+        if (isCVal[0])
+            lt = ACS(CVal, lav)->type;
+        else
+            lt = lvs->_retType->type;
+        if (isCVal[0])
+            ls = ACS(CVal, lav)->toString();
+        else
+            ls = lvs->_label;
+
         auto rav  = context->mulExp()->accept(this);
         isCVal[1] = g_sw->isCVal.get();
         auto& rvs = g_builder->getLastSen();
+
+        if (isCVal[1])
+            rt = ACS(CVal, rav)->type;
+        else
+            rt = rvs->_retType->type;
+        if (isCVal[1])
+            rs = ACS(CVal, rav)->toString();
+        else
+            rs = rvs->_label;
 
         if (isCVal[0] && isCVal[1]) {
             // 按照const的写法，直接算出来。
@@ -1275,28 +1428,6 @@ std::any Visitor::visitAdd(SysyParser::AddContext* context)
         }
         // not all const.......Let's gen some sentences.
         else {
-            IRValType lt;
-            if (isCVal[0])
-                lt = ACS(CVal, lav)->type;
-            else
-                lt = lvs->_retType->type;
-            string ls;
-            if (isCVal[0])
-                ls = ACS(CVal, lav)->toString();
-            else
-                ls = lvs->_label;
-
-            IRValType rt;
-            if (isCVal[1])
-                rt = ACS(CVal, rav)->type;
-            else
-                rt = rvs->_retType->type;
-            string rs;
-            if (isCVal[1])
-                rs = ACS(CVal, rav)->toString();
-            else
-                rs = rvs->_label;
-
             if (lt == IRCtrl::IRValType::Int) {
                 if (rt != IRCtrl::IRValType::Int) {
                     g_builder->checkTypeAndCast(

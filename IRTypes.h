@@ -31,6 +31,7 @@ namespace IRCtrl
 {
 
 enum class IRValType {
+    Unknown,
     Func,
     Int,
     Float,
@@ -40,8 +41,6 @@ enum class IRValType {
     FloatArr,   // compatibility
     IntArr,     // compatibility
     Bool,
-
-    Unknown
 };
 
 enum class IRValOp { Add, Sub, Mul, Div, Mod };

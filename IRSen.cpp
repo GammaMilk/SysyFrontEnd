@@ -152,11 +152,24 @@ string opToStr(IROp op_)
 string GepSen::toString()
 {
     stringstream ss;
-    ss<<outLabel<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
-    ss<<", i32 0";
-    for(auto x:offset) {
-        ss<<", i32 "<<x;
+    if(dimensionality_reduction==false) {
+        /* getelementptr i32*, i32** %1002, i32 0, i32 2 */
+        ss<<outLabel<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
+        ss<<", i32 0";
+        for(auto x:offset) {
+            ss<<", i32 "<<x;
+        }
+    } else {
+        //   %v4 = getelementptr i32, i32* %v3, i32 2
+        auto tp = DPC(ArrayType, t);
+        // cut *
+        auto no_star = tp->toString().substr(0,tp->toString().size()-1);
+        ss<<outLabel<<" = "<<"getelementptr "<<no_star<<", "<<tp->toString()<<" "<<sourceName;
+        for(auto x:offset) {
+            ss<<", i32 "<<x;
+        }
     }
+
     return ss.str();
 }
 string Memset::toString()

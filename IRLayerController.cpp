@@ -4,6 +4,7 @@
 
 #include "IRLayerController.h"
 #include "IRLogger.h"
+#include "IRUtils.h"
 #include <iostream>
 
 namespace IRCtrl
@@ -63,17 +64,27 @@ void IRCtrl::IRLayerController::push(const std::shared_ptr<IRVal>& val)
 }
 
 
-std::shared_ptr<IRVal> IRLayerController::queryLocal(
-    const string& symbol_name, const string& functionName, bool recursively
-)
+std::shared_ptr<IRVal> IRLayerController::queryLocal(const string& symbol_name, bool recursively)
 {
     for (int i = _layers.size() - 1; i > 0; i--) {
         auto sy = _layers[i].symbols.find(symbol_name);
         if (sy != _layers[i].symbols.end()) { return sy->second; }
         if (!recursively) break;
     }
-    // check global symbols for in-function;
-    auto idName = functionName + "." + symbol_name;
+    return nullptr;
+}
+void IRLayerController::pushGlobal(const shared_ptr<IRVal>& val)
+{
+    if (_layers.empty()) {
+        LOGE("ERROR no layers!");
+        return;
+    }
+    _layers.front().symbols[val->name] = val;
+}
+std::shared_ptr<IRVal>
+IRLayerController::queryLocalConst(const string& symbol_name, const string& functionName)
+{
+    string idName = Utils::localConstName(functionName,symbol_name);
     if (_layers.empty())
         return nullptr;
     else {
@@ -83,14 +94,6 @@ std::shared_ptr<IRVal> IRLayerController::queryLocal(
         else
             return sy->second;
     }
-}
-void IRLayerController::pushGlobal(const shared_ptr<IRVal>& val)
-{
-    if (_layers.empty()) {
-        LOGE("ERROR no layers!");
-        return;
-    }
-    _layers.front().symbols[val->name] = val;
 }
 
 

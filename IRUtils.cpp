@@ -95,7 +95,7 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
 {
     // iList contains vector<shared_ptr<InitListVal>> initList and vector<shared_ptr<CVal>> cVal;
 
-    // FUCk, Don't use a stack to simulate a recursively process
+    // FUCk, Don't use a stack to simulate a recursive process
     auto r    = make_shared<CArr>("", iList->contained);
     r->_shape = shape;
     if (iList->empty()) {
@@ -198,6 +198,10 @@ std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal>& cVal)
     }
 
     return {position, iInit, fInit};
+}
+string Utils::localConstName(const string& functionName, const string& idName)
+{
+    return "__const."+functionName+"."+idName;
 }
 
 

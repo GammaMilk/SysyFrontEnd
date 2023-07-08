@@ -167,9 +167,9 @@ public:
     vector<shared_ptr<CVal>> _childVals;
     vector<decltype(CARR)>   witch;
     IRValType                containedType = IRValType::Float;
+    [[maybe_unused]] string shapeString();
 
-protected:
-    virtual string shapeString();
+    static string shapeString(IRValType containedType_, const std::deque<size_t>& shape_);
 };
 
 /// No need to init "type" in this constructor.

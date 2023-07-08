@@ -44,8 +44,7 @@ int main(int argc, const char** argv)
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
 
-        if (arg == "-S") {
-        } else if (arg == "-o") {
+        if (arg == "-o") {
             if (i + 1 < argc) {
                 outputFile = argv[i + 1];
                 ++i;
@@ -58,6 +57,9 @@ int main(int argc, const char** argv)
             inputFile = arg;
         }
     }
+    if(!inputFile.empty()) {
+        LOGD("input: "<<inputFile);
+    }
 
     // 处理缺省参数
     if (inputFile.empty()) { inputFile = "../testsrc/1.c"; }
@@ -65,9 +67,9 @@ int main(int argc, const char** argv)
     std::ifstream inputStream;
     std::ofstream outputStream;
 
-    auto sourceFileName = "../testsrc/1.c";
+    auto sourceFileName = inputFile;
 
-    outputStream.open("../testsrc/1.txt", std::ios::out);
+    outputStream.open(outputFile, std::ios::out);
     inputStream.open(sourceFileName, std::ios::in);
     if (!inputStream) {
         cout << "no such inputStream" << endl;

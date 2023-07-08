@@ -69,7 +69,7 @@ void IRCtrl::IRBuilder::_as(const std::string& s)
 
 int IRCtrl::IRBuilder::getNewLabel()
 {
-    _label += 1;
+    _label+=1;
     return _label;
 }
 
@@ -142,8 +142,10 @@ const unique_ptr<LocalSen>& IRBuilder::addAdd(SPType t_, string v1, string v2)
     unique_ptr<BiSen> s;
     if (t_->type == IRValType::Float) {
         s = MU<BiSen>(getNewLocalLabelStr(), IROp::FADD, v1, t_, v2);
+        s->_retType = makeType(IRValType::Float);
     } else {
         s = MU<BiSen>(getNewLocalLabelStr(), IROp::ADD, v1, t_, v2);
+        s->_retType = makeType(IRValType::Int);
     }
     addIntoCurBB(std::move(s));
     return getLastSen();
