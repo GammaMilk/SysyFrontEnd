@@ -117,7 +117,10 @@ string CArr::toString()
             // zero or zeroinitializer
             size_t front = _shape.front();
             _shape.pop_front();
-            ss<<shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+            if(_shape.empty())
+                ss<<elementTypeString<<" 0, ";
+            else
+                ss<<shapeString(this->containedType, _shape)<< " zeroinitializer, ";
             _shape.push_front(front);
         } else {
             // cval. output its value or init another array?
@@ -211,7 +214,10 @@ string VArr::toString()
             // zero or zeroinitializer
             size_t front = _shape.front();
             _shape.pop_front();
-            ss<<CArr::shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+            if(_shape.empty())
+                ss<<elementTypeString<<" 0, ";
+            else
+                ss<<CArr::shapeString(this->containedType, _shape)<< " zeroinitializer, ";
             _shape.push_front(front);
         } else {
             // cval. output its value or init another array?

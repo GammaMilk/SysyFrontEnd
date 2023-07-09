@@ -157,6 +157,23 @@ void ArrayPosPlusN(const std::deque<size_t>& shape, std::deque<size_t>& cur, siz
         }
     }
 }
+shared_ptr<CVal> makeSureType(IRValType ty_, const shared_ptr<CVal>& val)
+{
+    if (val->type == ty_) {
+        return val;
+    } else {
+        if (ty_ == IRValType::Int) {
+            auto res = make_shared<IntCVal>("");
+            res->iVal = DPC(FloatCVal, val)->fVal;
+            return res;
+        } else if (ty_ == IRValType::Float) {
+            auto res = make_shared<FloatCVal>("");
+            res->fVal = DPC(IntCVal, val)->iVal;
+            return res;
+        }
+    }
+    return nullptr;
+}
 struct CArrGenerator {
     std::shared_ptr<CArr> arr;
     std::deque<size_t> cur;
@@ -179,7 +196,8 @@ struct CArrGenerator {
         for (auto i=0;i< val->which.size();i++) {
             if(val->which[i]==InitListVal::CVAL) {
                 auto & c = getValInACArrRef(arr, pos,shape);
-                c= val->cVal [pVal++];
+//                c= val->cVal [pVal++];
+                c= makeSureType(arr->containedType, val->cVal [pVal++]);
                 ArrayPosPlusN(shape, pos,1);
             } else {
                 auto before = pos[d];
