@@ -152,21 +152,27 @@ string opToStr(IROp op_)
 string GepSen::toString()
 {
     stringstream ss;
-    if(dimensionality_reduction==false) {
+    if(!dimensionality_reduction) {
         /* getelementptr i32*, i32** %1002, i32 0, i32 2 */
-        ss<<outLabel<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
+        ss<<_label<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
         ss<<", i32 0";
         for(auto x:offset) {
             ss<<", i32 "<<x;
+        }
+        for(const auto& xy:offset_str) {
+            ss<<", i32 "<<xy;
         }
     } else {
         //   %v4 = getelementptr i32, i32* %v3, i32 2
         auto tp = DPC(ArrayType, t);
         // cut *
         auto no_star = tp->toString().substr(0,tp->toString().size()-1);
-        ss<<outLabel<<" = "<<"getelementptr "<<no_star<<", "<<tp->toString()<<" "<<sourceName;
+        ss<<_label<<" = "<<"getelementptr "<<no_star<<", "<<tp->toString()<<" "<<sourceName;
         for(auto x:offset) {
             ss<<", i32 "<<x;
+        }
+        for(const auto& xy:offset_str) {
+            ss<<", i32 "<<xy;
         }
     }
 
@@ -182,5 +188,34 @@ string Memset::toString()
     ss<<_label<<" = bitcast "<<this->pt->toString()<<" " <<sourceName<<" to i32*\n";
     ss<<"    call void @llvm.memset.p0.i32(i32* "<<_label<<", i8 "<<int(x)<<", i32 "<<bytes<<", i1 false)";
     return ss.str();
+}
+string CallSen::toString()
+{
+    /*
+     *
+        _label   = std::move(outLabel_);
+        _retType = makeType(retType_);
+        _op      = IROp::CALL;
+
+        string toString() override;
+        protected:
+        string funcName;
+        IRValType retType;
+        vector<SPType> argTypes;
+        vector<string> argNames;
+     */
+    stringstream ss;
+
+    //   %v6 = call i32 @foo2(i32* %v5)
+    ss<<_label<<" = call "<<_retType->toString()<<" @"<<funcName<<"(";
+    for(int i=0;i<argTypes.size();i++) {
+        ss<<argTypes[i]->toString()<<" "<<argNames[i];
+        if(i!=argTypes.size()-1) {
+            ss<<", ";
+        }
+    }
+    ss<<")";
+    return ss.str();
+
 }
 }   // namespace IRCtrl

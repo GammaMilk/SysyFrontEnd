@@ -222,6 +222,7 @@ public:
 class VArr : public VVal
 {
 public:
+    enum { VARR, CVAL, ZERO };
     explicit VArr(const string& name1, IRValType contained)
         : VVal(name1)
         , containedType(contained)
@@ -229,11 +230,34 @@ public:
         isConst = false;
         type    = IRValType::Arr;
     }
+    explicit VArr(const CArr& fromCArr)
+        : VVal(fromCArr.name)
+    {
+        name = fromCArr.name;
+        id = fromCArr.id;
+        type = IRValType::Arr;
+        containedType = fromCArr.containedType;
+        _shape = fromCArr._shape;
+        isZero = fromCArr.isZero;
+        _childVals = fromCArr._childVals;
+        for(const auto& child : fromCArr._childArrs)
+        {
+            if(child!=nullptr)
+            _childArrs.emplace_back(make_shared<VArr>(*child));
+            else
+                _childArrs.emplace_back(nullptr);
+        }
+        for(const auto& child : fromCArr.witch)
+        {
+            witch.emplace_back((decltype(VARR))child);
+        }
+    }
 
     string toString() override;
 
     std::deque<size_t>       _shape;
     bool                     isZero = false;
+    vector<decltype(VARR)>   witch;
     vector<shared_ptr<VArr>> _childArrs;
     vector<shared_ptr<CVal>> _childVals;
     IRValType                containedType = IRValType::Float;

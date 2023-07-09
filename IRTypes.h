@@ -59,6 +59,8 @@ public:
         : type(t)
     {
     }
+    bool operator==(const IRValType& _t) const { return type == _t; }
+    bool operator!=(const IRValType& _t) const { return type != _t; }
     string toString() override { return {}; }
 };
 using SPType = shared_ptr<IRType>;

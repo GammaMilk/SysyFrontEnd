@@ -14,6 +14,33 @@ string IRFunction::toString()
         SPBasicBlock curBB;
         FuncType _type;
      */
+
+    if(onlyDecl) {
+        // declare void @putarray(i32, i32*)
+        stringstream ss;
+        string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
+        // define i32 @funcName(
+        ss << "declare " << retTypeStr << " @" << this->name << "(";
+        // i32, i32*
+        size_t labelNum = 0;
+        for (auto& t : this->_type.paramsType) {
+            ss << t->toString() << ", ";
+            labelNum += 1;
+        }
+        // cut the last ","
+        if (labelNum != 0) {
+            string s = ss.str();
+            if (!s.empty()) {
+                s.pop_back();
+                s.pop_back();
+            }
+            ss.str("");
+            ss << s;
+        }
+        ss << ")";
+        return ss.str();
+    }
+
     stringstream ss;
     string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
     // define i32 @funcName(
@@ -66,6 +93,10 @@ string IRFunction::toString()
         ss << "}\n";
         return ss.str();
     }
+}
+size_t IRFunction::getParamsNum() const
+{
+    return _type.paramsType.size();
 }
 
 }   // namespace IRCtrl

@@ -40,6 +40,7 @@ public:
     [[nodiscard]] int                           getLastLabel() const;
     [[nodiscard]] const unique_ptr<LocalSen>&   getLastSen() const;
     [[nodiscard]] const shared_ptr<IRFunction>& getFunction() const;
+    shared_ptr<IRFunction>                      getFunction(const string& funcName);
 
     // tools
     void checkTypeAndCast(SPType src, SPType target, string sourceName);

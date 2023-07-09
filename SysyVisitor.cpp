@@ -220,7 +220,6 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 g_lc->push(thisArr);
                 g_builder->getProgram()->addGlobalConst(thisArr);
             } else {
-                // TODO local CONST val array
                 shared_ptr<CArr> thisArr;
                 string funcName = g_builder->getFunction()->name;
                 auto thisArrGlobalName=Utils::localConstName(funcName, idName);
@@ -229,7 +228,6 @@ std::any Visitor::visitConstDef(SysyParser::ConstDefContext* context)
                 thisArr->id=thisArrGlobalName;
                 g_lc->pushGlobal(thisArr);
                 g_builder->getProgram()->addGlobalConst(thisArr);
-                // TODO generate store inst
             }
         }
     }
@@ -518,13 +516,13 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
     if (IR_IS_CONST) {
         auto ril = make_shared<InitListVal>();
         for (auto& x : context->initVal()) {
-            auto a = x->accept(this);   // ACCEPT
+            auto accept = x->accept(this);   // ACCEPT
             try {
-                auto il = ACS(InitListVal, a);
+                auto il = ACS(InitListVal, accept);
                 ril->initList.emplace_back(il);
                 ril->which.emplace_back(IRCtrl::InitListVal::INITLIST);
             } catch (const std::bad_any_cast&) {
-                auto cv = any_cast<shared_ptr<CVal>>(a);
+                auto cv = any_cast<shared_ptr<CVal>>(accept);
                 ril->cVal.emplace_back(cv);
                 ril->which.emplace_back(IRCtrl::InitListVal::CVAL);
             }
@@ -544,7 +542,7 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
             // #accept
             auto [type, lastId]    = getLastValue(accept);
             if (type == IRCtrl::IRValType::Unknown) {
-                // TODO this branch is InitList.
+                // this branch is InitList.
                 if(curArrayPos[curArrayDim]==thisDimBefore) {
                     ArrayPosPlusN(curShape, curArrayPos,1,curArrayDim);
                 }
@@ -569,6 +567,7 @@ std::any Visitor::visitInitList(SysyParser::InitListContext* context)
                 ArrayPosPlusN(curShape, curArrayPos, 1);
             }
         }
+        return 0x7de6543d;
     }
     return 0x7de6543d;
 }
@@ -994,133 +993,271 @@ std::any Visitor::visitLVal(SysyParser::LValContext* context)
             auto cArr = DPC(CArr, t);
             auto fpVar = DPC(FPVar,t);
             std::vector<size_t> shape;
+            std::vector<string> shape_string;
+            bool constShape = true;
 
             // Array 1 : deal with shape
             for (auto& e : context->exp()) {
+                // bug20230709 : if the shape is not a const, we need to generate code to calc it.
                 auto   a          = e->accept(this);
-                auto [_,i,____] = Utils::parseCVal(ACS(CVal, a));
-                size_t thisDimSize = i;
-                shape.emplace_back(thisDimSize);
+                if(!g_sw->isCVal.get()) {
+                    constShape = false;
+                    shape_string.emplace_back(g_builder->getLastLocalLabelStr());
+                } else {
+                    auto [_,i,____] = Utils::parseCVal(ACS(CVal, a));
+                    size_t thisDimSize = i;
+                    shape.emplace_back(thisDimSize);
+                    shape_string.emplace_back(std::to_string(thisDimSize));
+                }
             }
             // the shape really match a terminal element on an array???
             // In sysylex, "const int[]" won't be passed by function args. so we needn't deal
             // with that in-ordinary thing.
-
-            // varr or carr
-            if (vArr || cArr || (fpVar&&fpVar->type==IRCtrl::IRValType::Arr)) {
-                if (cArr) {
-                    // no need to check if you idiot are accessing a const string.
-                    vector<int> shape_(shape.begin(), shape.end());
-                    g_sw->isCVal = true;
-                    return cArr->access(shape_);
-                } else if (vArr) {
-                    // check terminal?
-                    if(vArr->_shape.size()==shape.size()) {
-                        // local varr / global varr (the same way.)
-                        // get element ptr
-                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),vArr->id, shape);
-                        gepSen->_retType = makeType(vArr->containedType);
-                        auto gepLabel =g_builder->getLastLocalLabelStr();
-                        // load from ptr
-                        auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(vArr->containedType),gepLabel);
-                        g_builder->addIntoCurBB(std::move(gepSen));
-                        g_builder->addIntoCurBB(std::move(loadSen));
-                        g_sw->isCVal=false;
-                        return 0;
-                    }
-                    // not the terminal node.
-                    else {
-                        // TODO:
-                        if(shape.empty()) {
-                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, std::vector<size_t>{0});
+            if(constShape) {
+                // varr or carr
+                if (vArr || cArr || (fpVar&&fpVar->type==IRCtrl::IRValType::Arr)) {
+                    if (cArr) {
+                        // no need to check if you idiot are accessing a const string.
+                        vector<int> shape_(shape.begin(), shape.end());
+                        g_sw->isCVal = true;
+                        return cArr->access(shape_);
+                    } else if (vArr) {
+                        // check terminal?
+                        if(vArr->_shape.size()==shape.size()) {
+                            // local varr / global varr (the same way.)
+                            // get element ptr
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),vArr->id, shape);
+                            gepSen->_retType = makeType(vArr->containedType);
+                            auto gepLabel =g_builder->getLastLocalLabelStr();
+                            // load from ptr
+                            auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(vArr->containedType),gepLabel);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            g_builder->addIntoCurBB(std::move(loadSen));
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
+                        // not the terminal node.
+                        else {
+                            // TODO:
+                            if(shape.empty()) {
+                                auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, std::vector<size_t>{0});
+                                gepSen->_retType = makeType(vArr->containedType);
+                                auto gepLabel =g_builder->getLastLocalLabelStr();
+                                g_builder->addIntoCurBB(std::move(gepSen));
+                                g_sw->isCVal=false;
+                                return 0;
+                            }
+                            // get element ptr
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, shape);
                             gepSen->_retType = makeType(vArr->containedType);
                             auto gepLabel =g_builder->getLastLocalLabelStr();
                             g_builder->addIntoCurBB(std::move(gepSen));
+
+                            auto newArrTypeTmp = MS<ArrayType>(*DPC(ArrayType, vArr->getTrueAdvType()));
+                            auto n2 = std::deque<int>(newArrTypeTmp->innerShape.begin(), newArrTypeTmp->innerShape.end());
+                            for(auto i=0;i<shape.size();i++) n2.pop_front();
+                            newArrTypeTmp->innerShape=vector<size_t>(n2.begin(),n2.end());
+
+                            auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),newArrTypeTmp,gepLabel, vector<size_t>{0});
+                            gepSen2->_retType = makeType(vArr->containedType);
+                            auto gepLabel2 =g_builder->getLastLocalLabelStr();
+                            g_builder->addIntoCurBB(std::move(gepSen2));
+
+                            g_sw->isCVal= false;
+                            return 0;
+                        }
+                    } // on fpvar array.
+                    else if(fpVar&&fpVar->type==IRCtrl::IRValType::Arr) {
+                        auto fpArrType = DPC(ArrayType, fpVar->fpType);
+                        // terminal node, directly to the ass.
+                        if(fpArrType->innerShape.size()==shape.size()) {
+                            // 2 steps load like this
+                            /*
+                             *  %v3 = load [2 x i32]*, [2 x i32]** %v1
+                                %v4 = getelementptr [2 x i32], [2 x i32]* %v3, i32 4, i32 1
+                                %v5 = load i32, i32* %v4
+                             */
+                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                            g_builder->addIntoCurBB(std::move(loadSen1));
+                            auto s1Label = g_builder->getLastLocalLabelStr();
+
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            auto s2Label = g_builder->getLastLocalLabelStr();
+
+                            auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(IRCtrl::IRValType::Int), s2Label);
+                            g_builder->addIntoCurBB(std::move(loadSen));
                             g_sw->isCVal=false;
                             return 0;
                         }
-                        // get element ptr
-                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, shape);
-                        gepSen->_retType = makeType(vArr->containedType);
-                        auto gepLabel =g_builder->getLastLocalLabelStr();
-                        g_builder->addIntoCurBB(std::move(gepSen));
+                        // not the terminal... fuck!!!!!
+                        else {
+                            // 0. no shape requested, just load and return.
+                            if(shape.empty()) {
+                                auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                                g_builder->addIntoCurBB(std::move(loadSen1));
+                                g_sw->isCVal=false;
+                                return 0;
+                            }
 
-                        auto newArrTypeTmp = MS<ArrayType>(*DPC(ArrayType, vArr->getTrueAdvType()));
-                        auto n2 = std::deque<int>(newArrTypeTmp->innerShape.begin(), newArrTypeTmp->innerShape.end());
-                        for(auto i=0;i<shape.size();i++) n2.pop_front();
-                        newArrTypeTmp->innerShape=vector<size_t>(n2.begin(),n2.end());
+                            // 1. the same way load from alloca.
+                            // %v3 = load [8 x i32]*, [8 x i32]** %v1
+                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                            g_builder->addIntoCurBB(std::move(loadSen1));
+                            auto s1Label = g_builder->getLastLocalLabelStr();
 
-                        auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),newArrTypeTmp,gepLabel, vector<size_t>{0});
-                        gepSen2->_retType = makeType(vArr->containedType);
-                        auto gepLabel2 =g_builder->getLastLocalLabelStr();
-                        g_builder->addIntoCurBB(std::move(gepSen2));
+                            // 2. gep the var but not completely.
+                            // %v4 = getelementptr [8 x i32], [8 x i32]* %v3, i32 1
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            auto s2Label = g_builder->getLastLocalLabelStr();
 
-                        g_sw->isCVal= false;
-                        return 0;
+                            // 3. another gep, but pass 0,0
+                            // %v5 = getelementptr [8 x i32], [8 x i32]* %v4, i32 0, i32 0
+                            auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s2Label,vector<size_t>({0,0}), true);
+                            g_builder->addIntoCurBB(std::move(gepSen2));
+                            auto s3Label = g_builder->getLastLocalLabelStr();
+
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
                     }
-                } // on fpvar array.
-                else if(fpVar&&fpVar->type==IRCtrl::IRValType::Arr) {
-                    auto fpArrType = DPC(ArrayType, fpVar->fpType);
-                    // terminal node, directly to the ass.
-                    if(fpArrType->innerShape.size()==shape.size()) {
-                        // 2 steps load like this
-                        /*
-                         *  %v3 = load [2 x i32]*, [2 x i32]** %v1
-                            %v4 = getelementptr [2 x i32], [2 x i32]* %v3, i32 4, i32 1
-                            %v5 = load i32, i32* %v4
-                         */
-                        auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
-                        g_builder->addIntoCurBB(std::move(loadSen1));
-                        auto s1Label = g_builder->getLastLocalLabelStr();
-
-                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
+                }
+                // else on single variable.
+                else {
+                    unique_ptr<LocalSen> s =
+                        MU<LoadSen>(g_builder->getNewLocalLabelStr(), t->getTrueAdvType(), sourceId);
+                    g_builder->addIntoCurBB(std::move(s));
+                }
+            }
+            // need load shape info from memory.
+            else {
+                // shape is not a const...
+                // varr or carr
+                if (vArr || cArr || (fpVar&&fpVar->type==IRCtrl::IRValType::Arr)) {
+                    if (cArr) {
+                        // local varr / global varr (the same way.)
+                        // get element ptr
+                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),cArr->getTrueAdvType(),vArr->id, shape_string);
+                        gepSen->_retType = makeType(cArr->containedType);
+                        auto gepLabel =g_builder->getLastLocalLabelStr();
+                        // load from ptr
+                        auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(cArr->containedType),gepLabel);
                         g_builder->addIntoCurBB(std::move(gepSen));
-                        auto s2Label = g_builder->getLastLocalLabelStr();
-
-                        auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(IRCtrl::IRValType::Int), s2Label);
                         g_builder->addIntoCurBB(std::move(loadSen));
                         g_sw->isCVal=false;
                         return 0;
-                    }
-                    // not the terminal... fuck!!!!!
-                    else {
-                        // 0. no shape requested, just load and return.
-                        if(shape.empty()) {
-                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
-                            g_builder->addIntoCurBB(std::move(loadSen1));
+                    } else if (vArr) {
+                        // check terminal?
+                        if(vArr->_shape.size()==shape.size()) {
+                            // local varr / global varr (the same way.)
+                            // get element ptr
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),vArr->id, shape_string);
+                            gepSen->_retType = makeType(vArr->containedType);
+                            auto gepLabel =g_builder->getLastLocalLabelStr();
+                            // load from ptr
+                            auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(vArr->containedType),gepLabel);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            g_builder->addIntoCurBB(std::move(loadSen));
                             g_sw->isCVal=false;
                             return 0;
                         }
+                        // not the terminal node.
+                        else {
+                            // TODO:
+                            if(shape_string.empty()) {
+                                auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, std::vector<size_t>{0});
+                                gepSen->_retType = makeType(vArr->containedType);
+                                auto gepLabel =g_builder->getLastLocalLabelStr();
+                                g_builder->addIntoCurBB(std::move(gepSen));
+                                g_sw->isCVal=false;
+                                return 0;
+                            }
+                            // get element ptr
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),vArr->getTrueAdvType(),sourceId, shape_string);
+                            gepSen->_retType = makeType(vArr->containedType);
+                            auto gepLabel =g_builder->getLastLocalLabelStr();
+                            g_builder->addIntoCurBB(std::move(gepSen));
 
-                        // 1. the same way load from alloca.
-                        // %v3 = load [8 x i32]*, [8 x i32]** %v1
-                        auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
-                        g_builder->addIntoCurBB(std::move(loadSen1));
-                        auto s1Label = g_builder->getLastLocalLabelStr();
+                            auto newArrTypeTmp = MS<ArrayType>(*DPC(ArrayType, vArr->getTrueAdvType()));
+                            auto n2 = std::deque<int>(newArrTypeTmp->innerShape.begin(), newArrTypeTmp->innerShape.end());
+                            for(auto i=0;i<shape.size();i++) n2.pop_front();
+                            newArrTypeTmp->innerShape=vector<size_t>(n2.begin(),n2.end());
 
-                        // 2. gep the var but not completely.
-                        // %v4 = getelementptr [8 x i32], [8 x i32]* %v3, i32 1
-                        auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape, true);
-                        g_builder->addIntoCurBB(std::move(gepSen));
-                        auto s2Label = g_builder->getLastLocalLabelStr();
+                            auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),newArrTypeTmp,gepLabel, vector<size_t>{0});
+                            gepSen2->_retType = makeType(vArr->containedType);
+                            auto gepLabel2 =g_builder->getLastLocalLabelStr();
+                            g_builder->addIntoCurBB(std::move(gepSen2));
 
-                        // 3. another gep, but pass 0,0
-                        // %v5 = getelementptr [8 x i32], [8 x i32]* %v4, i32 0, i32 0
-                        auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s2Label,vector<size_t>({0,0}), true);
-                        g_builder->addIntoCurBB(std::move(gepSen2));
-                        auto s3Label = g_builder->getLastLocalLabelStr();
+                            g_sw->isCVal= false;
+                            return 0;
+                        }
+                    } // on fpvar array.
+                    else if(fpVar&&fpVar->type==IRCtrl::IRValType::Arr) {
+                        auto fpArrType = DPC(ArrayType, fpVar->fpType);
+                        // terminal node, directly to the ass.
+                        if(fpArrType->innerShape.size()==shape_string.size()) {
+                            // 2 steps load like this
+                            /*
+                             *  %v3 = load [2 x i32]*, [2 x i32]** %v1
+                                %v4 = getelementptr [2 x i32], [2 x i32]* %v3, i32 4, i32 1
+                                %v5 = load i32, i32* %v4
+                             */
+                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                            g_builder->addIntoCurBB(std::move(loadSen1));
+                            auto s1Label = g_builder->getLastLocalLabelStr();
 
-                        g_sw->isCVal=false;
-                        return 0;
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape_string, true);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            auto s2Label = g_builder->getLastLocalLabelStr();
+
+                            auto loadSen = MU<LoadSen>(g_builder->getNewLocalLabelStr(),makeType(IRCtrl::IRValType::Int), s2Label);
+                            g_builder->addIntoCurBB(std::move(loadSen));
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
+                        // not the terminal... fuck!!!!!
+                        else {
+                            // 0. no shape requested, just load and return.
+                            if(shape_string.empty()) {
+                                auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                                g_builder->addIntoCurBB(std::move(loadSen1));
+                                g_sw->isCVal=false;
+                                return 0;
+                            }
+
+                            // 1. the same way load from alloca.
+                            // %v3 = load [8 x i32]*, [8 x i32]** %v1
+                            auto loadSen1 = MU<LoadSen>(g_builder->getNewLocalLabelStr(),fpArrType,fpVar->id);
+                            g_builder->addIntoCurBB(std::move(loadSen1));
+                            auto s1Label = g_builder->getLastLocalLabelStr();
+
+                            // 2. gep the var but not completely.
+                            // %v4 = getelementptr [8 x i32], [8 x i32]* %v3, i32 1
+                            auto gepSen = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s1Label, shape_string, true);
+                            g_builder->addIntoCurBB(std::move(gepSen));
+                            auto s2Label = g_builder->getLastLocalLabelStr();
+
+                            // 3. another gep, but pass 0,0
+                            // %v5 = getelementptr [8 x i32], [8 x i32]* %v4, i32 0, i32 0
+                            auto gepSen2 = MU<GepSen>(g_builder->getNewLocalLabelStr(),fpArrType,s2Label,vector<size_t>({0,0}), true);
+                            g_builder->addIntoCurBB(std::move(gepSen2));
+                            auto s3Label = g_builder->getLastLocalLabelStr();
+
+                            g_sw->isCVal=false;
+                            return 0;
+                        }
                     }
                 }
+                // else on single variable.
+                else {
+                    unique_ptr<LocalSen> s =
+                        MU<LoadSen>(g_builder->getNewLocalLabelStr(), t->getTrueAdvType(), sourceId);
+                    g_builder->addIntoCurBB(std::move(s));
+                }
             }
-            // else on single variable.
-            else {
-                unique_ptr<LocalSen> s =
-                    MU<LoadSen>(g_builder->getNewLocalLabelStr(), t->getTrueAdvType(), sourceId);
-                g_builder->addIntoCurBB(std::move(s));
-            }
+
+
         }
         return t;
     }
@@ -1219,10 +1356,78 @@ std::any Visitor::visitUnaryExp_(SysyParser::UnaryExp_Context* context)
 std::any Visitor::visitCall(SysyParser::CallContext* context)
 {
     string idName = context->Ident()->getText();
-    // TODO parse funcrparams.
-    if(context->funcRParams()!= nullptr) {
-        context->funcRParams()->accept(this);
+    auto func = g_builder->getFunction(idName);
+    if (func == nullptr) {
+        throw std::runtime_error("Function " + idName + " not found!");
     }
+    size_t nParams = 0;
+    if(context->funcRParams()!= nullptr) {
+        nParams= context->funcRParams()->funcRParam().size();
+    }
+    // check params num
+    if (func->getParamsNum() != nParams) {
+        throw std::runtime_error("Function " + idName + " params num not match!");
+    }
+    size_t pFuncParam = 0;
+    vector<string> argNames;
+
+    if(context->funcRParams()!= nullptr){
+        for(auto fp:context->funcRParams()->funcRParam()) {
+            //     ↓↓↓↓↓↓↓↓↓↓↓ ACCEPT ↓↓↓↓↓↓↓↓↓↓↓
+            auto any_param = fp->exp()->accept(this);
+            //     ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+            if(g_sw->isCVal) {
+                auto argType = func->_type.paramsType[pFuncParam++];
+                if(*argType!=IRValType::Int && *argType!=IRValType::Float) {
+                    throw std::runtime_error("Function " + idName + " params type not match!");
+                }
+                auto cVal = ACS(CVal,any_param);
+                auto [pos, iVal, fVal] = Utils::parseCVal(cVal);
+                if(*argType==IRValType::Int) {
+                    argNames.emplace_back(std::to_string(iVal));
+                } else if(*argType==IRValType::Float) {
+                    argNames.emplace_back(Utils::floatTo64BitStr(fVal));
+                }
+            }
+            // none cVal
+            else {
+                auto argType = func->_type.paramsType[pFuncParam++]; // IRType
+                // two-way: array or not
+                if (argType->type==IRValType::Arr) {
+                    // no need to check type, just pass the value in argNames
+                    // TODO: check array type
+                    auto& lastSen = g_builder->getLastSen();
+                    string lastSenLabel = lastSen->_label;
+                    argNames.emplace_back(lastSenLabel);
+                } else {
+                    // need check type and do conversion
+                    // last sentence must be LOAD, so we can get the type
+                    auto& lastSen = g_builder->getLastSen();
+                    string lastSenLabel = lastSen->_label;
+                    if(*argType==IRValType::Int && *lastSen->_retType==IRValType::Float) {
+                        // do conversion
+                        g_builder->checkTypeAndCast(IRValType::Float,IRValType::Int, lastSenLabel);
+                        lastSenLabel=g_builder->getLastLocalLabelStr();
+                    } else if (*argType==IRValType::Float && *lastSen->_retType==IRValType::Int) {
+                        // do conversion
+                        g_builder->checkTypeAndCast(IRValType::Int,IRValType::Float, lastSenLabel);
+                        lastSenLabel=g_builder->getLastLocalLabelStr();
+                    }
+                    // pass value.
+                    argNames.emplace_back(lastSenLabel);
+                }
+            }
+        }
+    }
+    //(string outLabel_, string funcName_, IRValType retType_, vector<SPType> argTypes,
+    //            vector<string> argNames)
+    auto call = MU<CallSen>(g_builder->getNewLocalLabelStr(),
+                            idName,
+                            func->_type.retType,
+                            func->_type.paramsType,
+                            argNames);
+    g_builder->addIntoCurBB(std::move(call));
+    g_sw->isCVal=false;
     return 0;
 }
 

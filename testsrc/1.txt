@@ -1,58 +1,52 @@
 ; Filename = ../testsrc/1.c
 declare void @llvm.memset.p0.i32(i32*, i8, i32, i1)
-@ga = global [8 x [8 x [8 x i32]]] zeroinitializer
-define i32 @foo2(i32* %arg_0) {
+@gb = constant [2 x [3 x i32]] [[3 x i32] zeroinitializer, [3 x i32] [i32 5, i32 6, i32 zeroinitializer]]
+@ga = global [2 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] [i32 4, i32 5, i32 6]]
+declare i32 @getint()
+declare float @getfloat()
+declare i32 @getch()
+declare i32 @getarray(i32*)
+declare i32 @getfarray(float*)
+declare void @putint(i32)
+declare void @putfloat(float)
+declare void @putch(i32)
+declare void @putarray(i32, i32*)
+declare void @putfarray(i32, float*)
+declare void @_sysy_starttime(i32)
+declare void @_sysy_stoptime(i32)
+define i32 @add(i32 %arg_0, i32 %arg_1) {
+LEntry:
+    %0 = alloca i32
+    store i32 %arg_0, i32* %0
+    %1 = alloca i32
+    store i32 %arg_1, i32* %1
+    %2 = load i32, i32* %0
+    %3 = load i32, i32* %1
+    %4 = add i32 %2, %3
+    ret i32 %4
+}
+
+define i32 @access(i32* %arg_0, i32 %arg_1) {
 LEntry:
     %0 = alloca i32*
     store i32* %arg_0, i32** %0
-    %1 = alloca [12 x i32]
-    %2 = load i32*, i32** %0
-    %3 = getelementptr [12 x i32], [12 x i32]* %1, i32 0, i32 0
-}
-
-define i32 @foo1([8 x i32]* %arg_0) {
-LEntry:
-    %4 = alloca [8 x i32]*
-    store [8 x i32]* %arg_0, [8 x i32]** %4
-    %5 = load [8 x i32]*, [8 x i32]** %4
-    %6 = getelementptr [8 x i32], [8 x i32]* %5, i32 1
-    %7 = getelementptr [8 x i32], [8 x i32]* %6, i32 0, i32 0
-    %8 = load [8 x i32]*, [8 x i32]** %4
-    %9 = load [8 x i32]*, [8 x i32]** %4
-    %10 = getelementptr [8 x i32], [8 x i32]* %9, i32 1, i32 2
-    %11 = load i32, i32* %10
-    ret i32 %11
-}
-
-define i32 @foo3([8 x [8 x i32]]* %arg_0) {
-LEntry:
-    %12 = alloca [8 x [8 x i32]]*
-    store [8 x [8 x i32]]* %arg_0, [8 x [8 x i32]]** %12
-    %13 = load [8 x [8 x i32]]*, [8 x [8 x i32]]** %12
-    %14 = getelementptr [8 x [8 x i32]], [8 x [8 x i32]]* %13, i32 1, i32 2, i32 3
-    %15 = load i32, i32* %14
-    ret i32 %15
+    %1 = alloca i32
+    store i32 %arg_1, i32* %1
+    %2 = load i32, i32* %1
+    %3 = load i32*, i32** %0
+    %4 = getelementptr i32, i32* %3, i32 %2
+    %5 = load i32, i32* %4
+    ret i32 %5
 }
 
 define i32 @main() {
 LEntry:
-    %16 = alloca [10 x [8 x i32]]
-    %17 = alloca i32
-    %18 = alloca i32
-    %19 = getelementptr [8 x [8 x [8 x i32]]], [8 x [8 x [8 x i32]]]* , i32 0, i32 1, i32 2, i32 3
-    %20 = load i32, i32* %19
-    store i32 %20, i32* %17
-    %21 = getelementptr [8 x [8 x [8 x i32]]], [8 x [8 x [8 x i32]]]* @ga, i32 0, i32 6
-    %22 = getelementptr [8 x [8 x i32]], [8 x [8 x i32]]* %21, i32 0, i32 0
-    store i32 , i32* %17
-    %23 = getelementptr [8 x [8 x [8 x i32]]], [8 x [8 x [8 x i32]]]* @ga, i32 0, i32 1, i32 2
-    %24 = getelementptr [8 x i32], [8 x i32]* %23, i32 0, i32 0
-    store i32 , i32* %17
-    %25 = getelementptr [8 x [8 x [8 x i32]]], [8 x [8 x [8 x i32]]]* @ga, i32 0, i32 0
-    store i32 , i32* %17
-    %26 = load i32, i32* %17
-    %27 = load i32, i32* %18
-    %28 = add i32 %26, %27
-    ret i32 %28
+    %0 = alloca i32
+    store i32 2, i32* %0
+    %1 = getelementptr [2 x [3 x i32]], [2 x [3 x i32]]* @ga, i32 0, i32 1
+    %2 = getelementptr [3 x i32], [3 x i32]* %1, i32 0, i32 0
+    %3 = load i32, i32* %0
+    %4 = call i32 @access(i32* %2, i32 %3)
+    ret i32 %4
 }
 

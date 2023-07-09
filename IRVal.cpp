@@ -108,25 +108,23 @@ string CArr::toString()
         return ss.str();
     }
     ss << " [";
-    int pArr=-1,pVal=-1;
-    for(auto ty:witch) {
+    for(auto i=0;i<witch.size();i++) {
+        auto ty=witch[i];
         if(ty==CARR) {
-            pArr+=1;
             // arr, recursive
-            ss<<_childArrs[pArr]->toString()<<", ";
+            ss<<_childArrs[i]->toString()<<", ";
         } else if (ty==ZERO) {
             // zero or zeroinitializer
-            size_t i = _shape.front();
+            size_t front = _shape.front();
             _shape.pop_front();
             ss<<shapeString(this->containedType, _shape)<< " zeroinitializer, ";
-            _shape.push_front(i);
+            _shape.push_front(front);
         } else {
-            pVal+=1;
             // cval. output its value or init another array?
-            size_t i = _shape.front();
+            size_t front = _shape.front();
             _shape.pop_front();
-            ss<<fillZero(_shape,_childVals[pVal], this->containedType)<<", ";
-            _shape.push_front(i);
+            ss<<fillZero(_shape,_childVals[i], this->containedType)<<", ";
+            _shape.push_front(front);
         }
     }
 //    if (!this->_childArrs.empty()) {
@@ -151,13 +149,6 @@ shared_ptr<CVal> CArr::access(const vector<int>& indices)
 {
     auto* cur = this;
     for (int i : indices) {
-        int pCarr = -1, pCVal = -1;
-        for (int j = 0; j <= i; j++) {
-            if (cur->witch[j] == CARR)
-                pCarr++;
-            else if (cur->witch[j] == CVAL)
-                pCVal++;
-        }
         if (cur->witch[i] == ZERO) {
             if (this->containedType == IRValType::Int) {
                 return make_shared<IntCVal>("", 0);
@@ -165,10 +156,10 @@ shared_ptr<CVal> CArr::access(const vector<int>& indices)
                 return make_shared<FloatCVal>("", 0);
             }
         } else if (cur->witch[i] == CARR) {
-            cur = cur->_childArrs[pCarr].get();
+            cur = cur->_childArrs[i].get();
             continue;
         } else {   // CVAL
-            auto cv = cur->_childVals[pCVal];
+            auto cv = cur->_childVals[i];
             return cv;
         }
     }
@@ -178,7 +169,7 @@ shared_ptr<CVal> CArr::access(const vector<int>& indices)
     // Someone who reach this flag, and she would plug-out this FLAG.
 
     // on the other way, one who want to access an array, she has to check shape had been matched.
-
+    return nullptr;
 }
 [[maybe_unused]] string CArr::shapeString()
 {
@@ -205,20 +196,29 @@ string VArr::toString()
     string       elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
     // [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] zeroinitializer, [3 x i32]
     // zeroinitializer]
-    ss << CArr::shapeString(containedType, _shape);
+    ss << CArr::shapeString(this->containedType, this->_shape);
     if (this->isZero) {
         ss << " zeroinitializer";
         return ss.str();
     }
     ss << " [";
-    // vector<shared_ptr<CArr>> _childArrs;
-    // vector<shared_ptr<CVal>> _childVals;
-    if (!this->_childArrs.empty()) {
-        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
-    }
-    if (!this->_childVals.empty()) {
-        for (auto& x : this->_childVals) {
-            ss << elementTypeString << " " << x->toString() << ", ";
+    for(auto i=0;i<witch.size();i++) {
+        auto ty=witch[i];
+        if(ty==VARR) {
+            // arr, recursive
+            ss<<_childArrs[i]->toString()<<", ";
+        } else if (ty==ZERO) {
+            // zero or zeroinitializer
+            size_t front = _shape.front();
+            _shape.pop_front();
+            ss<<CArr::shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+            _shape.push_front(front);
+        } else {
+            // cval. output its value or init another array?
+            size_t front = _shape.front();
+            _shape.pop_front();
+            ss<<fillZero(_shape,_childVals[i], this->containedType)<<", ";
+            _shape.push_front(front);
         }
     }
     // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
@@ -227,8 +227,36 @@ string VArr::toString()
     s.pop_back();
     s.pop_back();
     s += "]";
-
+    LOGD(s);
     return s;
+//    stringstream ss;
+//    string       elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
+//    // [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] zeroinitializer, [3 x i32]
+//    // zeroinitializer]
+//    ss << CArr::shapeString(containedType, _shape);
+//    if (this->isZero) {
+//        ss << " zeroinitializer";
+//        return ss.str();
+//    }
+//    ss << " [";
+//    // vector<shared_ptr<CArr>> _childArrs;
+//    // vector<shared_ptr<CVal>> _childVals;
+//    if (!this->_childArrs.empty()) {
+//        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
+//    }
+//    if (!this->_childVals.empty()) {
+//        for (auto& x : this->_childVals) {
+//            ss << elementTypeString << " " << x->toString() << ", ";
+//        }
+//    }
+//    // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
+//    // So we need to remove it.
+//    string s = ss.str();
+//    s.pop_back();
+//    s.pop_back();
+//    s += "]";
+//
+//    return s;
 }
 string VArr::shapeString()
 {

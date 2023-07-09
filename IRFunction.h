@@ -18,6 +18,7 @@ public:
     vector<SPBasicBlock> bbs;
     SPBasicBlock         curBB;
     FuncType             _type;
+    bool onlyDecl = false;
 
     IRFunction(FuncType& type1, const string& name1)
         : _type(std::move(type1))
@@ -27,6 +28,18 @@ public:
         name = name1;
         type = IRValType::Func;
     }
+
+    IRFunction(const shared_ptr<FuncType>& type1, const string& name1, bool onlyDecl1)
+        : _type(*type1), onlyDecl(onlyDecl1) {
+        type=IRValType::Func;
+        name=name1;
+        if(!onlyDecl1) {
+            curBB = MS<IRBasicBlock>("LEntry");
+            bbs.push_back(curBB);
+        }
+    }
+
+    [[nodiscard]] size_t getParamsNum() const;
 
 public:
     string toString() override;

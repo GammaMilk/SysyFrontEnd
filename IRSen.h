@@ -239,21 +239,29 @@ class GepSen : public LocalSen
 {
 public:
     GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_)
-        : t(std::move(t_)),sourceName(std::move(source_)),outLabel(std::move(outLabel_))
+        : t(std::move(t_)),sourceName(std::move(source_))
         , offset(offset_)
     {
+        _label=outLabel_;
     }
     GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_, bool dr)
-        : t(std::move(t_)),sourceName(std::move(source_)),outLabel(std::move(outLabel_))
+        : t(std::move(t_)),sourceName(std::move(source_))
         , offset(offset_), dimensionality_reduction(dr)
     {
+        _label=outLabel_;
+    }
+    GepSen(string outLabel_, SPType t_, string source_, vector<string> offset_str_, bool dr=false)
+        : t(std::move(t_)),sourceName(std::move(source_))
+        , offset_str(offset_str_), dimensionality_reduction(dr)
+    {
+        _label=outLabel_;
     }
     string toString() override;
 
 protected:
     SPType      t;
     vector<size_t> offset;
-    string outLabel;
+    vector<string> offset_str;
     string sourceName;
     bool dimensionality_reduction = false;
 };
@@ -272,6 +280,32 @@ protected:
 
 public:
     string toString() override;
+};
+
+//   %v13 = call i32 @foo3([8 x [8 x i32]]* %v12)
+//   %v6 = call i32 @foo2(i32* %v5)
+//   %v3 = call i32 @foo1(i32 %v2)
+class CallSen : public LocalSen
+{
+public:
+    CallSen(string outLabel_, string funcName_, IRValType retType_, vector<SPType> argTypes,
+            vector<string> argNames)
+        : funcName(std::move(funcName_))
+        , retType(retType_)
+        , argTypes(std::move(argTypes))
+        , argNames(std::move(argNames))
+    {
+        _label   = std::move(outLabel_);
+        _retType = makeType(retType_);
+        _op      = IROp::CALL;
+    }
+
+    string toString() override;
+protected:
+    string funcName;
+    IRValType retType;
+    vector<SPType> argTypes;
+    vector<string> argNames;
 };
 
 // tool functions:

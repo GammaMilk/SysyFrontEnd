@@ -54,7 +54,8 @@ private:
     template<class T1, class T2>
     static float FLOP(T1 v1, T2 v2, IRValOp op);
 
-};   // IRCtrl
+};
+
 }   // namespace IRCtrl
 
 #endif   // SYSYLEX_IRUTILS_H
