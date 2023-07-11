@@ -167,7 +167,7 @@ public:
     vector<shared_ptr<CVal>> _childVals;
     vector<decltype(CARR)>   witch;
     IRValType                containedType = IRValType::Float;
-    [[maybe_unused]] string shapeString();
+    [[maybe_unused]] string shapeString() const;
 
     static string shapeString(IRValType containedType_, const std::deque<size_t>& shape_);
 };

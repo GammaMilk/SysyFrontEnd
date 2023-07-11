@@ -47,6 +47,8 @@ SPType makeType(IRValType _t)
     if (_t == IRValType::Int) return make_shared<IntType>();
     if (_t == IRValType::Float) return make_shared<FloatType>();
     if (_t == IRValType::Void) return make_shared<VoidType>();
+    if (_t == IRValType::Bool) return make_shared<BoolType>();
+    throw std::runtime_error("Unknown type");
     return nullptr;
 }
 

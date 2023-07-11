@@ -150,7 +150,7 @@ public:
     virtual std::any visitLOrExp_(SysyParser::LOrExp_Context* context) = 0;
 };
 
-class Visitor : public SysyVisitor
+class IRVisitor : public SysyVisitor
 {
 public:
     std::any visitCompUnit(SysyParser::CompUnitContext* context) override;
@@ -293,4 +293,11 @@ public:
     string curArrId;
     shared_ptr<IRCtrl::IRType> curArrType;
     // end  for local array def
+
 };
+
+// utils
+namespace IRCtrl{
+std::tuple<IRValType, string> getLastValue(std::any aVal);
+std::tuple<IRValType, string> getLastValue();
+}

@@ -7,7 +7,7 @@
 #include "IRTypes.h"
 #include "IRVal.h"
 #include "IRBasicBlock.h"
-#include "IRBBController.h"
+#include "IRCondAndIterController.h"
 namespace IRCtrl
 {
 

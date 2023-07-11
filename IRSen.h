@@ -80,7 +80,7 @@ public:
 class ConstSen : public IRSen
 {
 public:
-    virtual std::string toString() override;
+    std::string toString() override;
 };
 
 /// Global Val: Including i32/float global single/array. Excluding func def.
@@ -221,8 +221,8 @@ class BiSen : public LocalSen
 {
 public:
     BiSen(string outLabel, IROp op_, string v1_, SPType ty, string v2_)
-        : v1(v1_)
-        , v2(v2_)
+        : v1(std::move(v1_))
+        , v2(std::move(v2_))
     {
         _label   = std::move(outLabel);
         _retType = std::move(ty);
@@ -242,19 +242,19 @@ public:
         : t(std::move(t_)),sourceName(std::move(source_))
         , offset(offset_)
     {
-        _label=outLabel_;
+        _label=outLabel_;setRetType();
     }
     GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_, bool dr)
         : t(std::move(t_)),sourceName(std::move(source_))
         , offset(offset_), dimensionality_reduction(dr)
     {
-        _label=outLabel_;
+        _label=outLabel_;setRetType();
     }
     GepSen(string outLabel_, SPType t_, string source_, vector<string> offset_str_, bool dr=false)
         : t(std::move(t_)),sourceName(std::move(source_))
         , offset_str(offset_str_), dimensionality_reduction(dr)
     {
-        _label=outLabel_;
+        _label=outLabel_;setRetType();
     }
     string toString() override;
 
@@ -264,6 +264,7 @@ protected:
     vector<string> offset_str;
     string sourceName;
     bool dimensionality_reduction = false;
+    void setRetType();
 };
 
 // declare void @llvm.memset.p0.i32(ptr, i8, i32, i1)
@@ -308,8 +309,83 @@ protected:
     vector<string> argNames;
 };
 
+// br i1 %v3, label %5, label %6
+// br label %7
+class BrSen : public LocalSen
+{
+public:
+    BrSen(string cond_, string trueLabel_, string falseLabel_)
+        : cond(std::move(cond_))
+        , trueLabel(std::move(trueLabel_))
+        , falseLabel(std::move(falseLabel_))
+    {
+        _op = IROp::BR;
+        brType=BrType::COND;
+    }
+
+    BrSen(string trueLabel_)
+        : trueLabel(std::move(trueLabel_))
+    {
+        _op = IROp::BR;
+        brType=BrType::UNCOND;
+    }
+protected:
+    string cond, trueLabel, falseLabel;
+
+    // br type: conditional or unconditional
+    enum class BrType
+    {
+        COND,
+        UNCOND
+    } brType;
+
+public:
+    string toString() override;
+};
+
+// https://llvm.org/docs/LangRef.html#icmp-instruction
+// <result> = icmp <cond> <ty> <op1>, <op2>   ; yields i1 or <N x i1>:result
+class IcmpSen : public LocalSen
+{
+public:
+    IcmpSen(string outLabel_, ICMPOp cond_, string op1_, string op2_)
+        : cond(cond_), op1(std::move(op1_)), op2(std::move(op2_))
+    {
+        _label   = std::move(outLabel_);
+        _op      = IROp::ICMP;
+        _retType = makeType(IRValType::Bool);
+    }
+
+protected:
+    string op1, op2;
+    ICMPOp cond;
+
+public:
+    string toString() override;
+};
+
+class FcmpSen : public LocalSen
+{
+public:
+    FcmpSen(string outLabel_, FCMPOp cond_, string op1_, string op2_)
+        : cond(cond_), op1(std::move(op1_)), op2(std::move(op2_))
+    {
+        _label   = std::move(outLabel_);
+        _op      = IROp::FCMP;
+        _retType = makeType(IRValType::Bool);
+    }
+
+protected:
+    string op1, op2;
+    FCMPOp cond;
+
+public:
+    string toString() override;
+};
+
 // tool functions:
 static string opToStr(IROp op_);
+bool isTerminal(const IRSen& sen);
 }   // namespace IRCtrl
 
 

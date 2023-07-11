@@ -48,6 +48,7 @@ private:
 
 public:
     [[maybe_unused]] [[nodiscard]] bool isInGlobal() const;
+    size_t                              getCurLayerNum();
 };
 }   // namespace IRCtrl
 

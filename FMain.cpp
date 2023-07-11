@@ -37,8 +37,8 @@ static std::ostream null_stream = std::ostream(nullptr);
 
 int main(int argc, const char** argv)
 {
-    std::string inputFile;
-    std::string outputFile;
+    std::string inputFileName;
+    std::string outputFileName;
     std::string optimizationLevel;
 
     for (int i = 1; i < argc; ++i) {
@@ -46,7 +46,7 @@ int main(int argc, const char** argv)
 
         if (arg == "-o") {
             if (i + 1 < argc) {
-                outputFile = argv[i + 1];
+                outputFileName = argv[i + 1];
                 ++i;
             } else {
                 std::cerr << "No output filename" << std::endl;
@@ -54,46 +54,37 @@ int main(int argc, const char** argv)
             }
         } else if (arg == "-O1") {
         } else {
-            inputFile = arg;
+            inputFileName = arg;
         }
     }
-    if(!inputFile.empty()) {
-        LOGD("input: "<<inputFile);
-    }
+    if (!inputFileName.empty()) { LOGD("input: " << inputFileName); }
 
     // 处理缺省参数
-    if (inputFile.empty()) { inputFile = "../testsrc/1.c"; }
-    if (outputFile.empty()) { outputFile = "../testsrc/1.txt"; }
+    if (inputFileName.empty()) { inputFileName = "../testsrc/1.c"; }
+    if (outputFileName.empty()) { outputFileName = "../testsrc/1.txt"; }
     std::ifstream inputStream;
     std::ofstream outputStream;
 
-    auto sourceFileName = inputFile;
+    auto sourceFileName = inputFileName;
 
-    outputStream.open(outputFile, std::ios::out);
+    outputStream.open(outputFileName, std::ios::out);
     inputStream.open(sourceFileName, std::ios::in);
     if (!inputStream) {
         cout << "no such inputStream" << endl;
         return 0;
     }
-    LOGD("File Fine.");
+    LOGD("File Fine."<< inputFileName);
     ANTLRInputStream  input(inputStream);
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);
 
-//    tokens.fill();
     SysyParser                   parser(&tokens);
     SysyParser::CompUnitContext* tree = parser.compUnit();
 
-    // cout<<parser.blockItem()->toStringTree(true)<<endl;
-
-    auto visitor = Visitor();
-    // visitor.visit(tree);
-    tree->accept(&visitor);
-    // cout << tree->toStringTree(&parser) << endl << endl;
+    auto irVisitor = IRVisitor();
+    tree->accept(&irVisitor);
 
     cout << endl;
-
-    //    outputStream << tree->toStringTree(&parser, true) << endl;
 
     IRCtrl::g_builder->setFilename(sourceFileName);
     IRCtrl::g_builder->build(outputStream);

@@ -19,4 +19,8 @@ bool IRBasicBlock::hasTerminalSen()
     if (tt->getOp() == IROp::RET || tt->getOp() == IROp::BR) { return true; }
     return false;
 }
+string IRBasicBlock::getLabel()
+{
+    return name;
+}
 }   // namespace IRCtrl

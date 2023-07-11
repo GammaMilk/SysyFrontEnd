@@ -30,6 +30,8 @@ public:
     buildAnVArrFromInitList(const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape);
 
     static string valTypeToStr(IRValType _t);
+    static string icmpOpToStr(ICMPOp _op);
+    static string fcmpOpToStr(FCMPOp _op);
 
     static string floatTo64BitStr(float x);
 

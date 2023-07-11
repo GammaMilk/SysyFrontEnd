@@ -3,6 +3,7 @@
 //
 
 #include "IRSen.h"
+#include "IRUtils.h"
 
 
 namespace IRCtrl
@@ -37,11 +38,7 @@ string GlobalValDeclSen::toString()
             }
         } else {
             auto y = std::dynamic_pointer_cast<VArr>(this->val);
-            if (y->containedType == IRValType::Float) {
-                ss << " " << this->val->toString();
-            } else {
-                ss << " " << this->val->toString();
-            }
+            ss << " " << this->val->toString();
         }
 
     } break;
@@ -61,7 +58,7 @@ IROp IRSen::getOp() const
 
 string LocalSen::toString()
 {
-    return std::string();
+    return {};
 }
 
 string AllocaSen::toString()
@@ -111,15 +108,15 @@ string opToStr(IROp op_)
 
     case IROp::ADD: return "add";
     case IROp::SUB: return "sub";
-    case IROp::MUL: break;
-    case IROp::SDIV: break;
-    case IROp::SREM: break;
+    case IROp::MUL: return "mul";
+    case IROp::SDIV: return "sdiv";
+    case IROp::SREM: return "srem";
     case IROp::UDIV: break;
     case IROp::UREM: break;
     case IROp::FADD: return "fadd";
     case IROp::FSUB: return "fsub";
-    case IROp::FMUL: break;
-    case IROp::FDIV: break;
+    case IROp::FMUL: return "fmul";
+    case IROp::FDIV: return "fdiv";
     case IROp::FNEG: break;
     case IROp::SHL: break;
     case IROp::LSHR: break;
@@ -145,6 +142,10 @@ string opToStr(IROp op_)
     }
     return "<<!!! IROP NOT IMPL !!!>>";
 }
+bool isTerminal(const IRSen& sen)
+{
+    return sen.getOp() == IROp::RET || sen.getOp() == IROp::BR;
+}
 
 /// getelementptr <TYPE>, <TYPE>* <POINTER>, i32 <OFFSET>, ...
 // getelementptr [10 x [3 x float]], [10 x [3 x float]]* %v5, i32 0, i32 0, i32 0
@@ -152,31 +153,35 @@ string opToStr(IROp op_)
 string GepSen::toString()
 {
     stringstream ss;
-    if(!dimensionality_reduction) {
+    if (!dimensionality_reduction) {
         /* getelementptr i32*, i32** %1002, i32 0, i32 2 */
-        ss<<_label<<" = "<<"getelementptr "<<t->toString()<<", "<<t->toString()<<"* "<<sourceName;
-        ss<<", i32 0";
-        for(auto x:offset) {
-            ss<<", i32 "<<x;
-        }
-        for(const auto& xy:offset_str) {
-            ss<<", i32 "<<xy;
-        }
+        ss << _label << " = "
+           << "getelementptr " << t->toString() << ", " << t->toString() << "* " << sourceName;
+        ss << ", i32 0";
+        for (auto x : offset) { ss << ", i32 " << x; }
+        for (const auto& xy : offset_str) { ss << ", i32 " << xy; }
     } else {
         //   %v4 = getelementptr i32, i32* %v3, i32 2
         auto tp = DPC(ArrayType, t);
         // cut *
-        auto no_star = tp->toString().substr(0,tp->toString().size()-1);
-        ss<<_label<<" = "<<"getelementptr "<<no_star<<", "<<tp->toString()<<" "<<sourceName;
-        for(auto x:offset) {
-            ss<<", i32 "<<x;
-        }
-        for(const auto& xy:offset_str) {
-            ss<<", i32 "<<xy;
-        }
+        auto no_star = tp->toString().substr(0, tp->toString().size() - 1);
+        ss << _label << " = "
+           << "getelementptr " << no_star << ", " << tp->toString() << " " << sourceName;
+        for (auto x : offset) { ss << ", i32 " << x; }
+        for (const auto& xy : offset_str) { ss << ", i32 " << xy; }
     }
 
     return ss.str();
+}
+void GepSen::setRetType()
+{
+    if (t->type == IRValType::Arr) {
+        // get inner type
+        auto tp        = DPC(ArrayType, t);
+        this->_retType = makeType(tp->innerType);
+    } else {
+        // pass
+    }
 }
 string Memset::toString()
 {
@@ -185,8 +190,9 @@ string Memset::toString()
         call void @llvm.memset.p0.i32(i32* %v6, i8 0, i32 120, i1 false)
      */
     stringstream ss;
-    ss<<_label<<" = bitcast "<<this->pt->toString()<<" " <<sourceName<<" to i32*\n";
-    ss<<"    call void @llvm.memset.p0.i32(i32* "<<_label<<", i8 "<<int(x)<<", i32 "<<bytes<<", i1 false)";
+    ss << _label << " = bitcast " << this->pt->toString() << " " << sourceName << " to i32*\n";
+    ss << "    call void @llvm.memset.p0.i32(i32* " << _label << ", i8 " << int(x) << ", i32 "
+       << bytes << ", i1 false)";
     return ss.str();
 }
 string CallSen::toString()
@@ -207,15 +213,39 @@ string CallSen::toString()
     stringstream ss;
 
     //   %v6 = call i32 @foo2(i32* %v5)
-    ss<<_label<<" = call "<<_retType->toString()<<" @"<<funcName<<"(";
-    for(int i=0;i<argTypes.size();i++) {
-        ss<<argTypes[i]->toString()<<" "<<argNames[i];
-        if(i!=argTypes.size()-1) {
-            ss<<", ";
-        }
+    if (_retType->type != IRValType::Void) { ss << _label << " = "; }
+    ss << "call " << _retType->toString() << " @" << funcName << "(";
+    for (int i = 0; i < argTypes.size(); i++) {
+        ss << argTypes[i]->toString() << " " << argNames[i];
+        if (i != argTypes.size() - 1) { ss << ", "; }
     }
-    ss<<")";
+    ss << ")";
     return ss.str();
+}
+string BrSen::toString()
+{
+    stringstream ss;
 
+    if(brType == BrType::COND){
+        ss << "br i1 " << cond << ", label %" << trueLabel << ", label %" << falseLabel;
+    }else if(brType == BrType::UNCOND){
+        ss << "br label %" << trueLabel;
+    }
+    return ss.str();
+}
+
+/// <result> = icmp eq i32 4, 5  ; yields i1 true
+/// \return A i32 comparison string, which has a label representing the result(i1)
+string IcmpSen::toString()
+{
+    stringstream ss;
+    ss<<_label<<" = icmp "<< Utils::icmpOpToStr(cond) <<" i32 "<<op1<<", "<<op2;
+    return ss.str();
+}
+string FcmpSen::toString()
+{
+    stringstream ss;
+    ss<<_label<<" = fcmp "<< Utils::fcmpOpToStr(cond) <<" float "<<op1<<", "<<op2;
+    return ss.str();
 }
 }   // namespace IRCtrl

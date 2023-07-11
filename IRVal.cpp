@@ -64,33 +64,32 @@ string CArr::shapeString(IRValType containedType_, const std::deque<size_t>& sha
 
     for (auto& x : shape_) { ss << "[" << x << " x "; }
     ss << elementTypeString;
-    for (auto& x : shape_) { ss << "]"; }
+    for (size_t _ = 0; _ < shape_.size(); _++) { ss << "]"; }
     return ss.str();
 }
-string fillZero(std::deque<size_t> sh, const shared_ptr<CVal>& cv, IRValType t){
+string fillZero(std::deque<size_t> sh, const shared_ptr<CVal>& cv, IRValType t)
+{
     stringstream ss;
-    string elementTypeStr = t==IRValType::Float?"float":"i32";
-    if(sh.empty()){
-        ss<<elementTypeStr<<" "<<cv->toString();
+    string       elementTypeStr = t == IRValType::Float ? "float" : "i32";
+    if (sh.empty()) {
+        ss << elementTypeStr << " " << cv->toString();
         return ss.str();
-    } else if (sh.size()==1) {
-        ss<<CArr::shapeString(t,sh)<<" ";
-        ss<<"[";
-        ss<<elementTypeStr<<" "<<cv->toString();
-        for(auto i=1;i<sh.front();i++) {
-            ss<<", "<<elementTypeStr<<" 0";
-        }
-        ss<<"]";
+    } else if (sh.size() == 1) {
+        ss << CArr::shapeString(t, sh) << " ";
+        ss << "[";
+        ss << elementTypeStr << " " << cv->toString();
+        for (auto i = 1; i < sh.front(); i++) { ss << ", " << elementTypeStr << " 0"; }
+        ss << "]";
         return ss.str();
     } else {
         // multiple dims
-        ss<<CArr::shapeString(t,sh)<<" ";
+        ss << CArr::shapeString(t, sh) << " ";
         auto curDim = sh.front();
         sh.pop_front();
-        ss<<fillZero(sh, cv,t);
-        for(auto i=1;i<curDim;i++) {
-            ss<<", "<<CArr::shapeString(t,sh)<<" ";
-            ss<<"zeroinitializer";
+        ss << fillZero(sh, cv, t);
+        for (auto i = 1; i < curDim; i++) {
+            ss << ", " << CArr::shapeString(t, sh) << " ";
+            ss << "zeroinitializer";
         }
         sh.push_front(curDim);
         return ss.str();
@@ -108,36 +107,36 @@ string CArr::toString()
         return ss.str();
     }
     ss << " [";
-    for(auto i=0;i<witch.size();i++) {
-        auto ty=witch[i];
-        if(ty==CARR) {
+    for (auto i = 0; i < witch.size(); i++) {
+        auto ty = witch[i];
+        if (ty == CARR) {
             // arr, recursive
-            ss<<_childArrs[i]->toString()<<", ";
-        } else if (ty==ZERO) {
+            ss << _childArrs[i]->toString() << ", ";
+        } else if (ty == ZERO) {
             // zero or zeroinitializer
             size_t front = _shape.front();
             _shape.pop_front();
-            if(_shape.empty())
-                ss<<elementTypeString<<" 0, ";
+            if (_shape.empty())
+                ss << elementTypeString << " 0, ";
             else
-                ss<<shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+                ss << shapeString(this->containedType, _shape) << " zeroinitializer, ";
             _shape.push_front(front);
         } else {
             // cval. output its value or init another array?
             size_t front = _shape.front();
             _shape.pop_front();
-            ss<<fillZero(_shape,_childVals[i], this->containedType)<<", ";
+            ss << fillZero(_shape, _childVals[i], this->containedType) << ", ";
             _shape.push_front(front);
         }
     }
-//    if (!this->_childArrs.empty()) {
-//        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
-//    }
-//    if (!this->_childVals.empty()) {
-//        for (auto& x : this->_childVals) {
-//            ss << elementTypeString << " " << x->toString() << ", ";
-//        }
-//    }
+    //    if (!this->_childArrs.empty()) {
+    //        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
+    //    }
+    //    if (!this->_childVals.empty()) {
+    //        for (auto& x : this->_childVals) {
+    //            ss << elementTypeString << " " << x->toString() << ", ";
+    //        }
+    //    }
     // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
     // So we need to remove it.
     string s = ss.str();
@@ -167,14 +166,14 @@ shared_ptr<CVal> CArr::access(const vector<int>& indices)
         }
     }
     // you have not return yet.
-    // wtf, u r accessing a incomplete arr shape. you must want to pass the pointer to another function.
-    // so how should we do? return 0? no,no,no. we must store this state into a FLAG.
+    // wtf, u r accessing a incomplete arr shape. you must want to pass the pointer to another
+    // function. so how should we do? return 0? no,no,no. we must store this state into a FLAG.
     // Someone who reach this flag, and she would plug-out this FLAG.
 
     // on the other way, one who want to access an array, she has to check shape had been matched.
     return nullptr;
 }
-[[maybe_unused]] string CArr::shapeString()
+[[maybe_unused]] string CArr::shapeString() const
 {
     return shapeString(this->containedType, this->_shape);
 }
@@ -205,64 +204,38 @@ string VArr::toString()
         return ss.str();
     }
     ss << " [";
-    for(auto i=0;i<witch.size();i++) {
-        auto ty=witch[i];
-        if(ty==VARR) {
+    for (auto i = 0; i < witch.size(); i++) {
+        auto ty = witch[i];
+        if (ty == VARR) {
             // arr, recursive
-            ss<<_childArrs[i]->toString()<<", ";
-        } else if (ty==ZERO) {
+            ss << _childArrs[i]->toString() << ", ";
+        } else if (ty == ZERO) {
             // zero or zeroinitializer
             size_t front = _shape.front();
             _shape.pop_front();
-            if(_shape.empty())
-                ss<<elementTypeString<<" 0, ";
+            if (_shape.empty())
+                ss << elementTypeString << " 0, ";
             else
-                ss<<CArr::shapeString(this->containedType, _shape)<< " zeroinitializer, ";
+                ss << CArr::shapeString(this->containedType, _shape) << " zeroinitializer, ";
             _shape.push_front(front);
         } else {
             // cval. output its value or init another array?
             size_t front = _shape.front();
             _shape.pop_front();
-            ss<<fillZero(_shape,_childVals[i], this->containedType)<<", ";
+            ss << fillZero(_shape, _childVals[i], this->containedType) << ", ";
             _shape.push_front(front);
         }
     }
     // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
     // So we need to remove it.
     string s = ss.str();
-    s.pop_back();
-    s.pop_back();
+    if (s.substr(s.size() - 2) == ", ") {
+        s.pop_back();
+        s.pop_back();
+    }
     s += "]";
     LOGD(s);
     return s;
-//    stringstream ss;
-//    string       elementTypeString = (this->containedType == IRValType::Float) ? "float" : "i32";
-//    // [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] zeroinitializer, [3 x i32]
-//    // zeroinitializer]
-//    ss << CArr::shapeString(containedType, _shape);
-//    if (this->isZero) {
-//        ss << " zeroinitializer";
-//        return ss.str();
-//    }
-//    ss << " [";
-//    // vector<shared_ptr<CArr>> _childArrs;
-//    // vector<shared_ptr<CVal>> _childVals;
-//    if (!this->_childArrs.empty()) {
-//        for (auto& x : this->_childArrs) { ss << x->toString() << ", "; }
-//    }
-//    if (!this->_childVals.empty()) {
-//        for (auto& x : this->_childVals) {
-//            ss << elementTypeString << " " << x->toString() << ", ";
-//        }
-//    }
-//    // Here we have a problem: at the end of the string, there is a ", " which is not allowed.
-//    // So we need to remove it.
-//    string s = ss.str();
-//    s.pop_back();
-//    s.pop_back();
-//    s += "]";
-//
-//    return s;
 }
 string VArr::shapeString()
 {
@@ -293,7 +266,7 @@ void FPVar::setFpType(const SPType& fpType_)
 {
     advancedType  = fpType_;
     FPVar::fpType = fpType_;
-    type=fpType_->type;
+    type          = fpType_->type;
 }
 
 string LocalInt::toString()

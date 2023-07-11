@@ -15,11 +15,11 @@ string IRFunction::toString()
         FuncType _type;
      */
 
-    if(onlyDecl) {
+    if (onlyDecl) {
         // declare void @putarray(i32, i32*)
         stringstream ss;
         string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
-        // define i32 @funcName(
+        // declare i32 @funcName(
         ss << "declare " << retTypeStr << " @" << this->name << "(";
         // i32, i32*
         size_t labelNum = 0;
@@ -73,8 +73,12 @@ string IRFunction::toString()
     vector<unique_ptr<LocalSen>> notAllocas;
     // TODO func BBs
     for (auto& b : bbs) {
+        if(b->instructions.empty()) continue ;
         ss << b->name << ":\n";
-        for (auto& s : b->instructions) { ss << "    " << s->toString() << "\n"; }
+        for (auto& s : b->instructions) {
+            ss << "    " << s->toString() << "\n";
+            if(isTerminal(*s)) break ;
+        }
         //        for (auto& instruction : b->instructions) {
         //            auto x = std::move(instruction);
         //            if (x->getOp() == IROp::ALLOCA) {
@@ -90,9 +94,9 @@ string IRFunction::toString()
         //            ss << "\n";
         //        }
 
-        ss << "}\n";
-        return ss.str();
     }
+    ss << "}\n";
+    return ss.str();
 }
 size_t IRFunction::getParamsNum() const
 {

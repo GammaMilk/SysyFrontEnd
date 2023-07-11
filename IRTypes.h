@@ -27,6 +27,9 @@ using std::vector;
 #define ACS(_ST, _TARG) std::any_cast<shared_ptr<_ST>>((_TARG))
 #define DPC(_ST, _TARG) std::dynamic_pointer_cast<_ST>((_TARG))
 
+#define VT_INT IRCtrl::IRValType::Int
+#define VT_FLOAT IRCtrl::IRValType::Float
+
 namespace IRCtrl
 {
 
@@ -43,7 +46,30 @@ enum class IRValType {
     Bool,
 };
 
-enum class IRValOp { Add, Sub, Mul, Div, Mod };
+enum class IRValOp { Add, Sub, Mul, Div, Rem };
+
+enum class ICMPOp {EQ, NE, UGT, UGE, ULT, ULE, SGT, SGE, SLT, SLE};
+
+/*
+ * false: always yields false, regardless of operands.
+oeq: yields true if both operands are not a QNAN and op1 is equal to op2.
+ogt: yields true if both operands are not a QNAN and op1 is greater than op2.
+oge: yields true if both operands are not a QNAN and op1 is greater than or equal to op2.
+olt: yields true if both operands are not a QNAN and op1 is less than op2.
+ole: yields true if both operands are not a QNAN and op1 is less than or equal to op2.
+one: yields true if both operands are not a QNAN and op1 is not equal to op2.
+ord: yields true if both operands are not a QNAN.
+ueq: yields true if either operand is a QNAN or op1 is equal to op2.
+ugt: yields true if either operand is a QNAN or op1 is greater than op2.
+uge: yields true if either operand is a QNAN or op1 is greater than or equal to op2.
+ult: yields true if either operand is a QNAN or op1 is less than op2.
+ule: yields true if either operand is a QNAN or op1 is less than or equal to op2.
+une: yields true if either operand is a QNAN or op1 is not equal to op2.
+uno: yields true if either operand is a QNAN.
+true: always yields true, regardless of operands.
+ */
+enum class FCMPOp { False, OEQ, OGT, OGE, OLT, OLE, ONE, ORD, UEQ, UGT, UGE, ULT, ULE, UNE, UNO, True };
+
 class IPrintable
 {
 public:

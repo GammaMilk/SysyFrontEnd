@@ -31,37 +31,50 @@ public:
     // builder
     void        build(std::ostream& os);
     std::string build();
-    void        addIntoCurBB(unique_ptr<LocalSen> sen);
+    SPBB addBB(const std::string& name);
+    SPBB createBB();
+    void        addSen(unique_ptr<LocalSen> sen);
 
     // label and sen getter
-    int                                         getNewLabel();
-    string                                      getNewLocalLabelStr();
-    string                                      getLastLocalLabelStr() const;
-    [[nodiscard]] int                           getLastLabel() const;
+    int                                         getNewLabelInt();
+    [[nodiscard]] int                           getLastLabelInt() const;
+    string                                      getNewLabel();
+    [[nodiscard]] string                        getLastLabel() const;
     [[nodiscard]] const unique_ptr<LocalSen>&   getLastSen() const;
     [[nodiscard]] const shared_ptr<IRFunction>& getFunction() const;
     shared_ptr<IRFunction>                      getFunction(const string& funcName);
 
+    // bb
+    int getNewBBLabelInt();
+    string getNewBBLabel();
+    void moveCurBBTo(SPBB bb);
+
     // tools
-    void checkTypeAndCast(SPType src, SPType target, string sourceName);
+    void checkTypeAndCast(const SPType& src, const SPType& target, const string& sourceName);
     /// Do a cast if type not eq or do nothing
     /// \param from source type
     /// \param to target type
     /// \param from_name source name
-    void checkTypeAndCast(IRValType from, IRValType to, string from_name);
+    void checkTypeAndCast(IRValType from, IRValType to, const string& from_name);
 
 
     // AddInstuctions into the builder.
-    const unique_ptr<LocalSen>& addAdd(SPType t_, string v1, string v2);
-    const unique_ptr<LocalSen>& addSub(SPType t_, string v1, string v2);
+    const unique_ptr<LocalSen>& addAdd(const SPType& t_, const string& v1, const string& v2);
+    const unique_ptr<LocalSen>& addSub(const SPType& t_, const string& v1, const string& v2);
+    const unique_ptr<LocalSen>& addMul(const SPType& t_, const string& v1, const string& v2);
+    const unique_ptr<LocalSen>& addDiv(const SPType& t_, const string& v1, const string& v2);
+    const unique_ptr<LocalSen>& addRem(const SPType& t_, const string& v1, const string& v2);
 
 private:
     // Here stmts only means other stmt(other than function, var, const)
     std::vector<std::string>    _stmts;
     std::string                 _filename;
     int                         _label = -1;
+    int _bb_label = 0; // starts at 0
     std::shared_ptr<IRProgram>  program;
     std::shared_ptr<IRFunction> thisFunction;
+    const std::string localVarPrefix = "%v";
+    const string bbPrefix = "L";
 
 public:
     [[nodiscard]] const shared_ptr<IRProgram>& getProgram() const;

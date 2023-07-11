@@ -18,10 +18,9 @@ if (WIN32)
 endif (WIN32)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 # add source files like CBaseListener.cpp, CBaseVisitor.cpp, etc.
-file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/Sysy*.cpp)
-file(GLOB SRC_LIST_SYSY ${SRC_LIST_SYSY} ${PROJECT_SOURCE_DIR}/IR*.cpp)
+file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/*.cpp)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} FMain.cpp IRVal.cpp IRVal.h IRTypes.cpp IRTypes.h IRUtils.cpp IRUtils.h IRExceptions.h IRGlobalSwitch.h IRProgram.cpp IRProgram.h IRBasicBlock.cpp IRBasicBlock.h IRBBController.cpp IRBBController.h IRFunction.cpp IRFunction.h IRGlobal.h)
+add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} SysyVisitor_Cond.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC /usr/local/include/antlr4-runtime)
 target_link_libraries(${PROJECT_NAME} antlr4-runtime)
 #target_link_libraries(${PROJECT_NAME} Threads::Threads)

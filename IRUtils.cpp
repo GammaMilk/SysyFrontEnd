@@ -92,41 +92,44 @@ Utils::constBiCalc(const std::shared_ptr<CVal>& a, const std::shared_ptr<CVal>& 
 /// \param pos
 /// \param shape
 /// \return a l-value ref of CVal. use auto& to receive the return
-inline shared_ptr<CVal>& getValInACArrRef(const shared_ptr<CArr>& arr_, const std::deque<size_t>& pos,
-                                             const std::deque<size_t>& shape)
+inline shared_ptr<CVal>& getValInACArrRef(
+    const shared_ptr<CArr>& arr_, const std::deque<size_t>& pos, const std::deque<size_t>& shape
+)
 {
     shared_ptr<CArr> arr = arr_;
-    for(auto p=0;p<pos.size()-1;p++){
+    for (auto p = 0; p < pos.size() - 1; p++) {
         // init
-        if(arr->_childArrs.empty()) {
-            for(auto i=0;i<arr->_shape.front();i++){
+        if (arr->_childArrs.empty()) {
+            for (auto i = 0; i < arr->_shape.front(); i++) {
                 arr->witch.emplace_back(CArr::ZERO);
                 arr->_childVals.emplace_back(nullptr);
                 arr->_childArrs.emplace_back(nullptr);
             }
         }
+        arr->isZero = false;
         // insert
-        if(arr->_childArrs[pos[p]] == nullptr){
+        if (arr->_childArrs[pos[p]] == nullptr) {
             arr->_childArrs[pos[p]] = make_shared<CArr>("", arr->containedType);
-            auto subArrShape = shape;
+            auto subArrShape        = shape;
             subArrShape.pop_front();
             arr->_childArrs[pos[p]]->_shape = subArrShape;
         }
         arr->witch[pos[p]] = CArr::CARR;
-        arr = arr->_childArrs[pos[p]]; // attention
+        arr                = arr->_childArrs[pos[p]];   // attention
     }
     // init twice
-    if(arr->_childArrs.empty()) {
-        for(auto i=0;i<arr->_shape.front();i++){
+    if (arr->_childArrs.empty()) {
+        for (auto i = 0; i < arr->_shape.front(); i++) {
             arr->witch.emplace_back(CArr::ZERO);
             arr->_childVals.emplace_back(nullptr);
             arr->_childArrs.emplace_back(nullptr);
         }
     }
-    if(arr->_childVals[pos.back()] == nullptr){
-        if (arr->containedType==IRValType::Int) {
+    arr->isZero = false;
+    if (arr->_childVals[pos.back()] == nullptr) {
+        if (arr->containedType == IRValType::Int) {
             arr->_childVals[pos.back()] = make_shared<IntCVal>("");
-        } else if (arr->containedType==IRValType::Float) {
+        } else if (arr->containedType == IRValType::Float) {
             arr->_childVals[pos.back()] = make_shared<FloatCVal>("");
         }
     }
@@ -141,10 +144,15 @@ inline shared_ptr<CVal>& getValInACArrRef(const shared_ptr<CArr>& arr_, const st
 /// \param N
 /// \param startsAt
 /// \param reset
-void ArrayPosPlusN(const std::deque<size_t>& shape, std::deque<size_t>& cur, size_t N, int startsAt=-1, bool reset=true)
+void ArrayPosPlusN(
+    const std::deque<size_t>& shape,
+    std::deque<size_t>&       cur,
+    size_t                    N,
+    int                       startsAt = -1,
+    bool                      reset    = true
+)
 {
-    if(startsAt==-1)
-        startsAt = shape.size()-1;
+    if (startsAt == -1) startsAt = shape.size() - 1;
     for (int i = startsAt; i >= 0; --i) {   // ATTENTION!!!!!!!!
         cur[i] += N;
         if (cur[i] < shape[i]) { break; }
@@ -152,9 +160,7 @@ void ArrayPosPlusN(const std::deque<size_t>& shape, std::deque<size_t>& cur, siz
         cur[i] %= shape[i];
     }
     if (reset) {
-        for (int i = startsAt+1; i < shape.size(); ++i) {
-            cur[i] = 0;
-        }
+        for (int i = startsAt + 1; i < shape.size(); ++i) { cur[i] = 0; }
     }
 }
 shared_ptr<CVal> makeSureType(IRValType ty_, const shared_ptr<CVal>& val)
@@ -163,11 +169,11 @@ shared_ptr<CVal> makeSureType(IRValType ty_, const shared_ptr<CVal>& val)
         return val;
     } else {
         if (ty_ == IRValType::Int) {
-            auto res = make_shared<IntCVal>("");
+            auto res  = make_shared<IntCVal>("");
             res->iVal = DPC(FloatCVal, val)->fVal;
             return res;
         } else if (ty_ == IRValType::Float) {
-            auto res = make_shared<FloatCVal>("");
+            auto res  = make_shared<FloatCVal>("");
             res->fVal = DPC(IntCVal, val)->iVal;
             return res;
         }
@@ -175,36 +181,41 @@ shared_ptr<CVal> makeSureType(IRValType ty_, const shared_ptr<CVal>& val)
     return nullptr;
 }
 struct CArrGenerator {
-    std::shared_ptr<CArr> arr;
-    std::deque<size_t> cur;
-    std::deque<size_t> shape;
-    std::vector<size_t> curShape;
-    std::vector<size_t> curArrayPos;
+    std::shared_ptr<CArr>          arr;
+    std::deque<size_t>             cur;
+    std::deque<size_t>             shape;
+    std::vector<size_t>            curShape;
+    std::vector<size_t>            curArrayPos;
     const shared_ptr<InitListVal>& iList;
-    size_t curArrayDim;
+    size_t                         curArrayDim;
 
-    CArrGenerator(const std::shared_ptr<CArr>& arr_, const std::deque<size_t>& shape_, const shared_ptr<InitListVal>& iList_)
-        : arr(arr_), cur(shape_.size(), 0), shape(shape_), iList(iList_), curArrayDim(0)
+    CArrGenerator(
+        const std::shared_ptr<CArr>&   arr_,
+        const std::deque<size_t>&      shape_,
+        const shared_ptr<InitListVal>& iList_
+    )
+        : arr(arr_)
+        , cur(shape_.size(), 0)
+        , shape(shape_)
+        , iList(iList_)
+        , curArrayDim(0)
     {
     }
-    void gen() {
-        gen(iList,cur,0);
-    }
-    void gen( const shared_ptr<InitListVal>& val,   std::deque<size_t>  pos,
-             size_t  d) {
-        auto pVal=0,pArr=0;
-        for (auto i=0;i< val->which.size();i++) {
-            if(val->which[i]==InitListVal::CVAL) {
-                auto & c = getValInACArrRef(arr, pos,shape);
-//                c= val->cVal [pVal++];
-                c= makeSureType(arr->containedType, val->cVal [pVal++]);
-                ArrayPosPlusN(shape, pos,1);
+    void gen() { gen(iList, cur, 0); }
+    void gen(const shared_ptr<InitListVal>& val, std::deque<size_t> pos, size_t d)
+    {
+        auto pVal = 0, pArr = 0;
+        for (auto i = 0; i < val->which.size(); i++) {
+            if (val->which[i] == InitListVal::CVAL) {
+                auto& c = getValInACArrRef(arr, pos, shape);
+                //                c= val->cVal [pVal++];
+                c = makeSureType(arr->containedType, val->cVal[pVal++]);
+                ArrayPosPlusN(shape, pos, 1);
             } else {
-                auto before = pos[d];
-                auto& il = val->initList[pArr++];
-                gen(il, pos, d+1);
-                if(before==pos[d])
-                    ArrayPosPlusN(shape, pos,1,d);
+                auto  before = pos[d];
+                auto& il     = val->initList[pArr++];
+                gen(il, pos, d + 1);
+                if (before == pos[d]) ArrayPosPlusN(shape, pos, 1, d);
             }
         }
     }
@@ -216,9 +227,10 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
     const shared_ptr<InitListVal>& iList, const std::deque<size_t>& shape
 )
 {
-    auto rr = make_shared<CArr>("", iList->contained);
+    auto rr    = make_shared<CArr>("", iList->contained);
     rr->_shape = shape;
-    auto g = CArrGenerator(rr,shape,iList);
+    rr->isZero = true;
+    auto g     = CArrGenerator(rr, shape, iList);
     g.gen();
     return g.arr;
 }
@@ -279,7 +291,53 @@ std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal>& cVal)
 }
 string Utils::localConstName(const string& functionName, const string& idName)
 {
-    return "__const."+functionName+"."+idName;
+    return "__const." + functionName + "." + idName;
+}
+
+/// \brief Get string representation of a icmp operator
+/// \param _op
+/// \return Just as you expected
+string Utils::icmpOpToStr(ICMPOp _op)
+{
+    // enum class ICMPOp {EQ, NE, UGT, UGE, ULT, ULE, SGT, SGE, SLT, SLE};
+    switch (_op) {
+        case ICMPOp::EQ: return "eq";
+        case ICMPOp::NE: return "ne";
+        case ICMPOp::UGT: return "ugt";
+        case ICMPOp::UGE: return "uge";
+        case ICMPOp::ULT: return "ult";
+        case ICMPOp::ULE: return "ule";
+        case ICMPOp::SGT: return "sgt";
+        case ICMPOp::SGE: return "sge";
+        case ICMPOp::SLT: return "slt";
+        case ICMPOp::SLE: return "sle";
+    }
+    throw std::runtime_error("Unknown icmp operator");
+}
+
+/// enum class FCMPOp { False, OEQ, OGT, OGE, OLT, OLE, ONE, ORD, UEQ, UGT, UGE, ULT, ULE, UNE, UNO, True };
+/// \param _op
+/// \return Just as you expected
+string Utils::fcmpOpToStr(FCMPOp _op)
+{
+    switch (_op) {
+        case FCMPOp::False: return "false";
+        case FCMPOp::OEQ: return "oeq";
+        case FCMPOp::OGT: return "ogt";
+        case FCMPOp::OGE: return "oge";
+        case FCMPOp::OLT: return "olt";
+        case FCMPOp::OLE: return "ole";
+        case FCMPOp::ONE: return "one";
+        case FCMPOp::ORD: return "ord";
+        case FCMPOp::UEQ: return "ueq";
+        case FCMPOp::UGT: return "ugt";
+        case FCMPOp::UGE: return "uge";
+        case FCMPOp::ULT: return "ult";
+        case FCMPOp::ULE: return "ule";
+        case FCMPOp::UNE: return "une";
+        case FCMPOp::UNO: return "uno";
+        case FCMPOp::True: return "true";
+    }
 }
 
 
@@ -291,7 +349,7 @@ T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Sub: return (T1)v1 - v2;
     case IRValOp::Mul: return (T1)v1 * v2;
     case IRValOp::Div: return (T1)v1 / v2;
-    case IRValOp::Mod: return (T1)v1 % v2;
+    case IRValOp::Rem: return (T1)v1 % v2;
     }
 }
 template<class T1, class T2>
@@ -302,7 +360,7 @@ T2 Utils::T2OP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Sub: return (T2)v1 - v2;
     case IRValOp::Mul: return (T2)v1 * v2;
     case IRValOp::Div: return (T2)v1 / v2;
-    case IRValOp::Mod: return (T2)v1 % v2;
+    case IRValOp::Rem: return (T2)v1 % v2;
     }
 }
 template<class T1, class T2>
@@ -313,7 +371,7 @@ float Utils::FLOP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Sub: return (float)v1 - v2;
     case IRValOp::Mul: return (float)v1 * v2;
     case IRValOp::Div: return (float)v1 / v2;
-    case IRValOp::Mod: throw std::invalid_argument("float cannot %");
+    case IRValOp::Rem: throw std::invalid_argument("float cannot %");
     }
 }
 }   // namespace IRCtrl
