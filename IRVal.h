@@ -62,12 +62,6 @@ public:
         , IRVal(name1)
     {
     }
-
-    //    NumberVal(bool is_global, bool is_const)
-    //        : isGlobal(is_global)
-    //        , isConst(is_const)
-    //    {
-    //    }
 };
 
 
@@ -198,6 +192,7 @@ public:
         : IntVal(name1)
     {
         iVal = val;
+        type = IRValType::Int;
     }
 
     string toString() override;
@@ -215,6 +210,7 @@ public:
         : FloatVal(name1)
     {
         fVal = val;
+        type = IRValType::Float;
     }
     string toString() override;
 };
@@ -322,7 +318,7 @@ public:
     LocalFloat(const string& _id, const string& _name)
         : LocalVar(_id)
     {
-        type = IRValType::Int;
+        type = IRValType::Float;
         name = _name;
     }
     string toString() override;
