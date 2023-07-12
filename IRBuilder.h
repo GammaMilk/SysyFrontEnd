@@ -47,7 +47,7 @@ public:
     // bb
     int getNewBBLabelInt();
     string getNewBBLabel();
-    void moveCurBBTo(SPBB bb);
+    void   moveToBB(SPBB bb);
 
     // tools
     void checkTypeAndCast(const SPType& src, const SPType& target, const string& sourceName);

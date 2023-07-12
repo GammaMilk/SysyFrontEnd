@@ -383,6 +383,25 @@ public:
     string toString() override;
 };
 
+class ZextSen : public LocalSen
+{
+public:
+    ZextSen(string outLabel_, string source_, IRValType from_)
+        : sourceName(std::move(source_)), from(from_)
+    {
+        _label   = std::move(outLabel_);
+        _op      = IROp::ZEXT;
+        _retType = makeType(IRValType::Int);
+    }
+
+protected:
+    string sourceName;
+    IRValType from;
+
+public:
+    string toString() override;
+};
+
 // tool functions:
 static string opToStr(IROp op_);
 bool isTerminal(const IRSen& sen);

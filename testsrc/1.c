@@ -1,14 +1,10 @@
-int a=1;
-float c=1;
+int a,c;
 int main()
 {
-    if(c<a)
-    {
+    a=getint();
+    c=getint();
+    if(a&&c) {
         a=2;
-    }
-    else
-    {
-        a=3;
-    }
+    }else a=0;
     return a;
 }

@@ -23,9 +23,12 @@ using IRCtrl::g_bbc;
 /// \return
 std::any IRVisitor::visitIfElse(SysyParser::IfElseContext* context)
 {
+    // status
+    g_sw->inIf.dive(true);
+
     // First we need to create 3 BBs
     SPBB trueBB = g_builder->createBB();
-    SPBB falseBB = nullptr;
+    SPBB falseBB;
     SPBB afterBB = g_builder->createBB();
 
     // check if there is else
@@ -50,10 +53,12 @@ std::any IRVisitor::visitIfElse(SysyParser::IfElseContext* context)
     g_builder->addSen(std::move(condBrSen));
 
     // 3. move to TrueBB
-    g_builder->moveCurBBTo(trueBB);
+    g_builder->moveToBB(trueBB);
 
     // 4. accept true stmt
+    g_sw->inIf.dive(false);
     context->stmt()[0]->accept(this);
+    g_sw->inIf.ascend();
 
     // 5. add BR
     auto trueBrSen = MU<BrSen>(afterBB->getLabel());
@@ -62,11 +67,13 @@ std::any IRVisitor::visitIfElse(SysyParser::IfElseContext* context)
     // 6-8 if there is else
     if (context->Else() != nullptr) {
         // 6. move to FalseBB
-        g_builder->moveCurBBTo(falseBB);
+        g_builder->moveToBB(falseBB);
 
         // 7. accept false stmt
+        g_sw->inIf.dive(false);
         if(context->stmt().size() == 2)
             context->stmt()[1]->accept(this);
+        g_sw->inIf.ascend();
 
         // 8. add BR
         auto falseBrSen = MU<BrSen>(afterBB->getLabel());
@@ -74,8 +81,10 @@ std::any IRVisitor::visitIfElse(SysyParser::IfElseContext* context)
     }
 
     // 9. move to AfterBB
-    g_builder->moveCurBBTo(afterBB);
+    g_builder->moveToBB(afterBB);
 
+    // 10. status
+    g_sw->inIf.ascend();
     return 0;
 }
 

@@ -306,7 +306,7 @@ string IRBuilder::getNewBBLabel()
 {
     return bbPrefix+std::to_string(getNewBBLabelInt());
 }
-void IRBuilder::moveCurBBTo(SPBB bb) {
+void IRBuilder::moveToBB(SPBB bb) {
     this->thisFunction->curBB = std::move(bb);
 }
 

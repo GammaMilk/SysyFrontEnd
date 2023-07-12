@@ -20,7 +20,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 # add source files like CBaseListener.cpp, CBaseVisitor.cpp, etc.
 file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/*.cpp)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} SysyVisitor_Cond.cpp)
+add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} SysyVisitor_Cond.cpp SysyVisitor_Arithmetic.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC /usr/local/include/antlr4-runtime)
 target_link_libraries(${PROJECT_NAME} antlr4-runtime)
 #target_link_libraries(${PROJECT_NAME} Threads::Threads)

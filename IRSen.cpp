@@ -4,6 +4,7 @@
 
 #include "IRSen.h"
 #include "IRUtils.h"
+#include "IRLogger.h"
 
 
 namespace IRCtrl
@@ -131,9 +132,9 @@ string opToStr(IROp op_)
     case IROp::RET: break;
     case IROp::BR: break;
     case IROp::CALL: break;
-    case IROp::ZEXT: break;
-    case IROp::SITOFP: break;
-    case IROp::FPTOSI: break;
+    case IROp::ZEXT: return "zext";
+    case IROp::SITOFP: return "sitofp";
+    case IROp::FPTOSI: return "fptosi";
     case IROp::BITCAST: break;
     case IROp::ICMP: break;
     case IROp::FCMP: break;
@@ -246,6 +247,18 @@ string FcmpSen::toString()
 {
     stringstream ss;
     ss<<_label<<" = fcmp "<< Utils::fcmpOpToStr(cond) <<" float "<<op1<<", "<<op2;
+    return ss.str();
+}
+
+///   %v7 = zext i1 %v6 to i32
+/// \return Just as you expect
+string ZextSen::toString()
+{
+    if(from!=IRValType::Bool) {
+        RUNTIME_ERROR("ZextSen::toString() from type is not i1");
+    }
+    stringstream ss;
+    ss<<_label<<" = zext i1 "<<sourceName<<" to i32";
     return ss.str();
 }
 }   // namespace IRCtrl

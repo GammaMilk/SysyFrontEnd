@@ -13,11 +13,10 @@ using SPBB = shared_ptr<IRBasicBlock>;
 
 struct IRBBLayer
 {
-    SPBB whileCondBB;
-    SPBB trueBB;
-    SPBB ifFalseBB;
-    SPBB whileBreakBB;
-    SPBB ifAfterBB;
+    SPBB   condBB;
+    SPBB   trueBB;
+    SPBB   falseBB;
+    SPBB   afterBB;
     size_t curLayerNum;
     enum LayerType
     {
@@ -41,6 +40,9 @@ public:
     SPBB queryWhileCondBB();
     SPBB queryWhileTrueBB();
     size_t queryWhileCurLayerNum();
+
+    SPBB queryTrueBB();
+    SPBB queryFalseBB();
 
 protected:
     vector<shared_ptr<IRBBLayer>> _layers;

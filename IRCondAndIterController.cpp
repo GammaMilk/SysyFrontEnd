@@ -3,6 +3,9 @@
 //
 
 #include "IRCondAndIterController.h"
+#include "IRLogger.h"
+
+#include <utility>
 
 namespace IRCtrl
 {
@@ -13,9 +16,9 @@ void IRCondAndIterController::pushIf(
 )
 {
     auto newLayer = make_shared<IRBBLayer>();
-    newLayer->trueBB = trueBB_;
-    newLayer->ifFalseBB = ifFalseBB_;
-    newLayer->ifAfterBB = ifAfterBB_;
+    newLayer->trueBB = std::move(trueBB_);
+    newLayer->falseBB     = std::move(ifFalseBB_);
+    newLayer->afterBB     = std::move(ifAfterBB_);
     newLayer->curLayerNum = curLayerNum_;
     newLayer->type = IRBBLayer::If;
     _layers.push_back(newLayer);
@@ -26,8 +29,9 @@ void IRCondAndIterController::pushWhile(
 {
     auto newLayer = make_shared<IRBBLayer>();
     newLayer->trueBB = std::move(trueBB_);
-    newLayer->whileCondBB = std::move(whileCondBB_);
-    newLayer->whileBreakBB = std::move(whileBreakBB_);
+    newLayer->condBB       = std::move(whileCondBB_);
+    newLayer->afterBB = std::move(whileBreakBB_);
+    newLayer->falseBB = newLayer->afterBB;
     newLayer->curLayerNum = curLayerNum_;
     newLayer->type = IRBBLayer::While;
     _layers.push_back(newLayer);
@@ -49,7 +53,7 @@ SPBB IRCondAndIterController::queryIfFalseBB()
 {
     for (auto it = _layers.rbegin(); it != _layers.rend(); it++) {
         if ((*it)->type == IRBBLayer::If) {
-            return (*it)->ifFalseBB;
+            return (*it)->falseBB;
         }
     }
     throw std::runtime_error("IRCondAndIterController::queryIfFalseBB: no if layer");
@@ -59,27 +63,18 @@ SPBB IRCondAndIterController::queryIfAfterBB()
 {
     for (auto it = _layers.rbegin(); it != _layers.rend(); it++) {
         if ((*it)->type == IRBBLayer::If) {
-            return (*it)->ifAfterBB;
+            return (*it)->afterBB;
         }
     }
     throw std::runtime_error("IRCondAndIterController::queryIfAfterBB: no if layer");
     return nullptr;
 }
-SPBB IRCondAndIterController::queryWhileBreakBB()
-{
-    for (auto it = _layers.rbegin(); it != _layers.rend(); it++) {
-        if ((*it)->type == IRBBLayer::While) {
-            return (*it)->whileBreakBB;
-        }
-    }
-    throw std::runtime_error("IRCondAndIterController::queryWhileBreakBB: no while layer");
-    return nullptr;
-}
+
 SPBB IRCondAndIterController::queryWhileCondBB()
 {
     for (auto it = _layers.rbegin(); it != _layers.rend(); it++) {
         if ((*it)->type == IRBBLayer::While) {
-            return (*it)->whileCondBB;
+            return (*it)->condBB;
         }
     }
     throw std::runtime_error("IRCondAndIterController::queryWhileCondBB: no while layer");
@@ -104,5 +99,29 @@ size_t IRCondAndIterController::queryWhileCurLayerNum()
     }
     throw std::runtime_error("IRCondAndIterController::queryWhileCurLayerNum: no while layer");
     return -1;
+}
+SPBB IRCondAndIterController::queryTrueBB()
+{
+    if(_layers.empty()) {
+        RUNTIME_ERROR("IRCondAndIterController::queryTrueBB: no layer");
+    }
+    return _layers.back()->trueBB;
+}
+SPBB IRCondAndIterController::queryFalseBB()
+{
+    if(_layers.empty()) {
+        RUNTIME_ERROR("IRCondAndIterController::queryFalseBB: no layer");
+    }
+    return _layers.back()->falseBB;
+}
+SPBB IRCondAndIterController::queryWhileBreakBB()
+{
+    for (auto it = _layers.rbegin(); it != _layers.rend(); it++) {
+        if ((*it)->type == IRBBLayer::While) {
+            return (*it)->falseBB;
+        }
+    }
+    throw std::runtime_error("IRCondAndIterController::queryWhileCurLayerNum: no while layer");
+    return nullptr;
 }
 }   // namespace IRCtrl

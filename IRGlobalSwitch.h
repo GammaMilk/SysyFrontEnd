@@ -92,6 +92,8 @@ public:
     IRBoolSwitch isCVal;
     IRBoolSwitch needLLValLoad;
     IRBoolSwitch isBool;
+    IRBoolSwitch inIf;
+    IRBoolSwitch inWhile;
 
     IRGlobalSwitch()
         : isConst(std::string("isConst"))
@@ -100,6 +102,8 @@ public:
         , isCVal(std::string("isCVal"))
         , needLLValLoad(std::string("needLLValLoad"))
     , isBool(std::string("isBool"))
+    , inIf(std::string("inIf"))
+    , inWhile(std::string("inWhile"))
     {
     }
 };

@@ -1,7 +1,7 @@
 ; Filename = ../testsrc/1.c
 declare void @llvm.memset.p0.i32(i32*, i8, i32, i1)
-@a = global i32 1
-@c = global float 0x3ff0000000000000
+@a = global i32 0
+@c = global i32 0
 declare i32 @getint()
 declare float @getfloat()
 declare i32 @getch()
@@ -16,19 +16,25 @@ declare void @_sysy_starttime(i32)
 declare void @_sysy_stoptime(i32)
 define i32 @main() {
 LEntry:
-    %v0 = load float, float* @c
-    %v1 = load i32, i32* @a
-    %v2 = sitofp i32 %v1 to float
-    %v3 = fcmp ult float %v0, %v2
-    br i1 %v3, label %L1, label %L3
+    %v0 = call i32 @getint()
+    store i32 %v0, i32* @a
+    %v1 = call i32 @getint()
+    store i32 %v1, i32* @c
+    %v2 = load i32, i32* @a
+    %v3 = icmp ne i32 %v2, 0
+    br i1 %v3, label %L4, label %L3
 L1:
     store i32 2, i32* @a
     br label %L2
 L2:
-    %v4 = load i32, i32* @a
-    ret i32 %v4
+    %v6 = load i32, i32* @a
+    ret i32 %v6
 L3:
-    store i32 3, i32* @a
+    store i32 0, i32* @a
     br label %L2
+L4:
+    %v4 = load i32, i32* @c
+    %v5 = icmp ne i32 %v4, 0
+    br i1 %v5, label %L1, label %L3
 }
 

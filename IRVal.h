@@ -55,6 +55,7 @@ public:
     bool isConst;
 
     virtual void unary() {}
+    virtual void notOp() {}
 
     explicit NumberVal(const std::string& name1)
         : isConst(false)
@@ -100,6 +101,7 @@ public:
 
     void   unary() override;
     string toString() override;
+    void   notOp() override;
 };
 
 
@@ -124,6 +126,7 @@ public:
 
     void   unary() override;
     string toString() override;
+    void   notOp() override;
 };
 
 class InitListVal : public IRVal

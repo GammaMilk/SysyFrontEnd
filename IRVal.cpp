@@ -21,6 +21,10 @@ string IntCVal::toString()
 {
     return std::to_string(this->iVal);
 }
+void IntCVal::notOp()
+{
+    iVal = !iVal;
+}
 
 void FloatCVal::unary()
 {
@@ -35,6 +39,10 @@ string FloatCVal::toString()
     double thisValue = this->fVal;
     ss << "0x" << std::hex << *(uint64_t*)(&thisValue);
     return ss.str();
+}
+void FloatCVal::notOp()
+{
+    fVal = !fVal;
 }
 
 string InitListVal::toString()
