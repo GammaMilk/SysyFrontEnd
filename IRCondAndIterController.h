@@ -21,7 +21,9 @@ struct IRBBLayer
     enum LayerType
     {
         While,
-        If
+        If,
+        Or,
+        And
     } type;
 };
 
@@ -32,6 +34,8 @@ public:
     IRCondAndIterController();
     void pushIf(SPBB trueBB_, SPBB ifFalseBB_, SPBB ifAfterBB_, size_t curLayerNum_);
     void pushWhile(SPBB trueBB_, SPBB whileCondBB_, SPBB whileBreakBB_, size_t curLayerNum_);
+    void pushOr(SPBB falseBB_);
+    void pushAnd(SPBB trueBB_);
     void pop();
     SPBB queryIfTrueBB();
     SPBB queryIfFalseBB();

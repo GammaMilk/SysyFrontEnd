@@ -467,7 +467,15 @@ std::any IRVisitor::visitVarDef(SysyParser::VarDefContext* context)
                 // pass the shape to the init list
                 // attention: this will pass to visitInitList. because there's no single value after
                 // an array.
+                /**
+                 * std::vector<size_t> curShape;
+                 * std::vector<size_t> curArrayPos;
+                 * size_t curArrayDim;
+                 * string curArrId;
+                 * shared_ptr<IRCtrl::IRType> curArrType;
+                 * */
                 this->curShape = vector<size_t>(shape.begin(), shape.end());
+                this->curArrayPos.clear();
                 this->curArrayPos.resize(curShape.size(), 0);
                 curArrayDim = 0;
                 curArrId    = newLabelS;
@@ -647,7 +655,9 @@ std::any IRVisitor::visitFuncDef(SysyParser::FuncDefContext* context)
         g_lc->push(fpVar);
     }
     // visit its block
+    g_sw->isNewFunc=true;
     context->block()->accept(this);
+    g_sw->isNewFunc=false;
     // check void function has ret sen?
     if (funcType.retType == IRCtrl::IRValType::Void) {
         for (auto& bb : g_builder->getFunction()->bbs) {
@@ -771,10 +781,16 @@ std::any IRVisitor::visitArrayParam(SysyParser::ArrayParamContext* context)
 /// \return
 std::any IRVisitor::visitBlock(SysyParser::BlockContext* context)
 {
-    if (!g_sw->isInFunc.get()) { g_lc->dive(); }
+    bool hereNewFunc = false;
+    if(g_sw->isNewFunc) {
+        hereNewFunc=true;
+        g_sw->isNewFunc.dive(false);
+    } else{
+        g_lc->dive();
+    }
     // In a Function.
     for (auto& x : context->blockItem()) { x->accept(this); }
-    if (!g_sw->isInFunc.get()) { g_lc->ascend(); }
+    if(!hereNewFunc) {g_lc->ascend();}
     return 0;
 }
 
@@ -941,7 +957,8 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
             shared_ptr<IRVal> t = g_lc->queryLocal(idName);
             if (t == nullptr) {
                 // 2. query global.
-                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+                if(g_sw->isInFunc)
+                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
                 if (t == nullptr) t = g_lc->query(idName);
                 assert(t != nullptr);
             }
@@ -958,7 +975,8 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
             shared_ptr<IRVal> t = g_lc->queryLocal(idName);
             if (t == nullptr) {
                 // 2. query global.
-                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+                if(g_sw->isInFunc)
+                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
                 if (t == nullptr) t = g_lc->query(idName);
                 assert(t != nullptr);
             }
@@ -976,8 +994,10 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
         shared_ptr<IRVal> t       = g_lc->queryLocal(idName);
         if (t == nullptr) {
             // query global.
-            t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+            if(g_sw->isInFunc)
+                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
             if (t == nullptr) t = g_lc->query(idName);
+            IR_ASSERT(t != nullptr, "lVal: " << idName << " not found.");
             isLocal  = false;
             sourceId = "@" + t->name;
         } else {
@@ -1260,7 +1280,7 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
                             auto n2 = std::deque<int>(
                                 newArrTypeTmp->innerShape.begin(), newArrTypeTmp->innerShape.end()
                             );
-                            for (auto i = 0; i < shape_string.size(); i++) n2.pop_front();
+                            for (int i = 0; i < shape_string.size(); i++) n2.pop_front();
                             newArrTypeTmp->innerShape = vector<size_t>(n2.begin(), n2.end());
 
                             auto gepSen2 = MU<GepSen>(

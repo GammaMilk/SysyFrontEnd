@@ -50,7 +50,7 @@ public:
     void   moveToBB(SPBB bb);
 
     // tools
-    void checkTypeAndCast(const SPType& src, const SPType& target, const string& sourceName);
+    void checkTypeAndCast(const SPType& from, const SPType& to, const string& from_name);
     /// Do a cast if type not eq or do nothing
     /// \param from source type
     /// \param to target type

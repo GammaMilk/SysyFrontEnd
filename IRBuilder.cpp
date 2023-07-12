@@ -185,19 +185,9 @@ const unique_ptr<LocalSen>& IRBuilder::getLastSen() const
 {
     return getFunction()->curBB->instructions.back();
 }
-void IRBuilder::checkTypeAndCast(const SPType& src, const SPType& target, const string& sourceName)
+void IRBuilder::checkTypeAndCast(const SPType& from, const SPType& to, const string& from_name)
 {
-    if (src->type == target->type) { return; }
-    if (src->type == IRValType::Float && target->type == IRValType::Int) {
-        auto sen =
-            MU<FpToSiSen>(this->getNewLabel(), makeType(IRValType::Float), sourceName);
-        this->addSen(std::move(sen));
-    } else if (src->type == IRValType::Int && target->type == IRValType::Float) {
-        auto sen = MU<SiToFpSen>(this->getNewLabel(), makeType(IRValType::Int), sourceName);
-        this->addSen(std::move(sen));
-    } else {
-        LOGE("!!! Cannot Check Type Not in FLOAT and INT !!!");
-    }
+    checkTypeAndCast(from->type,to->type, from_name);
 }
 const unique_ptr<LocalSen>& IRBuilder::addAdd(const SPType& t_, const string& v1, const string& v2)
 {
@@ -235,6 +225,9 @@ void IRBuilder::checkTypeAndCast(IRValType from, IRValType to, const string& fro
     } else if (from == IRValType::Int && to == IRValType::Float) {
         auto sen = MU<SiToFpSen>(this->getNewLabel(), makeType(IRValType::Int), from_name);
         this->addSen(std::move(sen));
+    }else if(from==IRValType::Bool&&to==IRValType::Int){
+        auto sen = MU<ZextSen>(this->getNewLabel(), from_name, IRValType::Bool);
+        this->addSen(std::move(sen));
     } else {
         RUNTIME_ERROR("!!! Cannot Check Type Not in FLOAT and INT !!!");
     }
@@ -243,6 +236,9 @@ shared_ptr<IRFunction> IRBuilder::getFunction(const string& funcName)
 {
     for (auto& f : this->program->getFuncs()) {
         if (f->name == funcName) { return f; }
+    }
+    if(this->thisFunction!= nullptr && this->thisFunction->name == funcName){
+        return this->thisFunction;
     }
     LOGE("Cannot find function " + funcName);
     throw std::runtime_error("Cannot find function " + funcName);

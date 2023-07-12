@@ -29,7 +29,7 @@ public:
     {
     }
     void add(UPLocalSen sen);
-    string getLabel();
+    string getLabel() const;
 
     bool hasTerminalSen();
 };

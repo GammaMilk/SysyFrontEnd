@@ -232,6 +232,7 @@ std::shared_ptr<CArr> Utils::buildAnCArrFromInitList(
     rr->isZero = true;
     auto g     = CArrGenerator(rr, shape, iList);
     g.gen();
+    rr->advancedType = MS<ArrayType>(rr->containedType, vector<size_t>(shape.begin(), shape.end()));
     return g.arr;
 }
 std::shared_ptr<VArr> Utils::buildAnVArrFromInitList(

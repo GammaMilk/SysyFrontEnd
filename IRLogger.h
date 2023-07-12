@@ -50,7 +50,13 @@ std::ostream& sysy_debug();
 #define RUNTIME_ERROR(message) \
       do {                       \
             LOGE(message);     \
-            throw std::runtime_error(message+std::string(__FILE__)+":"+std::to_string(__LINE__));     \
+            throw std::runtime_error(std::string(__FILE__)+":"+std::to_string(__LINE__));     \
         } while (0)
 
+#define IR_ASSERT(EXP_, MSG_) \
+        do {                       \
+                if(!(EXP_)){     \
+                    RUNTIME_ERROR(MSG_);     \
+                }\
+            } while (0)
 #endif   // SYSYLEX_IRLOGGER_H

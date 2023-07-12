@@ -31,8 +31,9 @@ std::any IRVisitor::visitUnaryAdd(SysyParser::UnaryAddContext* context)
         g_sw->isCVal = true;
         return (n);
     } else {
+        string zero = g_builder->getLastSen()->_retType->type == VT_INT ? "0" : "0x0";
         g_builder->addAdd(
-            g_builder->getLastSen()->_retType, "0", g_builder->getLastLabel()
+            g_builder->getLastSen()->_retType, zero, g_builder->getLastLabel()
         );
         g_sw->isCVal = false;
     }
@@ -52,8 +53,9 @@ std::any IRVisitor::visitUnarySub(SysyParser::UnarySubContext* context)
         g_sw->isCVal = true;
         return (n);
     } else {
+        string zero = g_builder->getLastSen()->_retType->type == VT_INT ? "0" : "0x0";
         g_builder->addSub(
-            g_builder->getLastSen()->_retType, "0", g_builder->getLastLabel()
+            g_builder->getLastSen()->_retType, zero, g_builder->getLastLabel()
         );
         g_sw->isCVal = false;
     }
@@ -87,7 +89,7 @@ std::any IRVisitor::visitNot(SysyParser::NotContext* context)
         } else {
             RUNTIME_ERROR("Not operation on non-int/float value");
         }
-        auto zext = MU<ZextSen>(g_builder->getLastLabel(), newLabel, IRValType::Bool);
+        auto zext = MU<ZextSen>(g_builder->getNewLabel(), newLabel, IRValType::Bool);
         g_builder->addSen(std::move(zext));
         g_sw->isCVal = false;
     }

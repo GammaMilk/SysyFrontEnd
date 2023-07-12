@@ -32,6 +32,17 @@ std::tuple<IRValType, string> makeSureBool(IRValType t_, const std::string& s_)
     }
 }
 
+std::tuple<IRValType, string> ZExtOrNot(IRValType t_, const std::string& s_)
+{
+    if(t_!=IRCtrl::IRValType::Bool) {
+        return {t_, s_};
+    } else {
+        auto zext = MU<ZextSen>(g_builder->getNewLabel(), s_, IRValType::Bool);
+        g_builder->addSen(std::move(zext));
+        return {IRValType::Int, g_builder->getLastLabel()};
+    }
+}
+
 /// cond: lOrExp;
 /// Here we must convert ALL types to bool(including CVal, Var, etc.)
 /// \param context
@@ -72,6 +83,7 @@ std::any IRVisitor::visitGeq(SysyParser::GeqContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->relExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->addExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -102,6 +114,7 @@ std::any IRVisitor::visitLt(SysyParser::LtContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->relExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->addExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -142,6 +155,7 @@ std::any IRVisitor::visitLeq(SysyParser::LeqContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->relExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->addExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -173,6 +187,7 @@ std::any IRVisitor::visitGt(SysyParser::GtContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->relExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->addExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -206,6 +221,7 @@ std::any IRVisitor::visitNeq(SysyParser::NeqContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->eqExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->relExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -236,6 +252,7 @@ std::any IRVisitor::visitEq(SysyParser::EqContext* context)
     // that means, relExp is always a single addExp
     auto relExp = context->eqExp()->accept(this);
     auto [lt, ls]= getLastValue(relExp);
+    tie(lt,ls)=ZExtOrNot(lt,ls);
     auto addExp = context->relExp()->accept(this);
     auto [rt, rs] = getLastValue(addExp);
     if(lt!=rt) {
@@ -281,6 +298,10 @@ std::any IRVisitor::visitLAndExp_(SysyParser::LAndExp_Context* context)
 /// \return
 std::any IRVisitor::visitAnd(SysyParser::AndContext* context)
 {
+    // 0. prepare
+    auto trueBB = g_builder->createBB();
+    g_bbc->pushAnd(trueBB);
+
     // 1. accept left.
     auto left = context->lAndExp()->accept(this);
     auto [lt,ls] = getLastValue(left);
@@ -292,13 +313,20 @@ std::any IRVisitor::visitAnd(SysyParser::AndContext* context)
     if((!g_sw->inIf)&&(!g_sw->inWhile)) RUNTIME_ERROR("And is not in if or while");
 
     // 4. br. if left is true, accept right. else, jump to end.
-    auto trueBB = g_builder->createBB();
-    auto br = MU<BrSen>(ls,trueBB->name,g_bbc->queryFalseBB()->name);
+    auto br = MU<BrSen>(ls,g_bbc->queryTrueBB()->name,g_bbc->queryFalseBB()->name);
     g_builder->addSen(std::move(br));
 
     // 5. move to trueBB. and accept right.
     g_builder->moveToBB(trueBB);
-    return context->eqExp()->accept(this);
+    g_bbc->pop();
+
+    auto accept =  context->eqExp()->accept(this);
+    auto [rt,rs] = getLastValue(accept);
+    makeSureBool(rt,rs);
+
+    g_sw->isBool=true;
+
+    return 0;
 }
 
 
@@ -307,6 +335,10 @@ std::any IRVisitor::visitAnd(SysyParser::AndContext* context)
 /// \return
 std::any IRVisitor::visitOr(SysyParser::OrContext* context)
 {
+    // 0. prepare falseBB
+    auto falseBB = g_builder->createBB();
+    g_bbc->pushOr(falseBB);
+
     // 1. accept left.
     auto left = context->lOrExp()->accept(this);
     auto [lt,ls] = getLastValue(left);
@@ -318,13 +350,20 @@ std::any IRVisitor::visitOr(SysyParser::OrContext* context)
     if((!g_sw->inIf)&&(!g_sw->inWhile)) RUNTIME_ERROR("And is not in if or while");
 
     // 4. br. if left is true, accept right. else, jump to end.
-    auto falseBB = g_builder->createBB();
-    auto br = MU<BrSen>(ls,g_bbc->queryTrueBB()->name, falseBB->name);
+    auto br = MU<BrSen>(ls,g_bbc->queryTrueBB()->name, g_bbc->queryFalseBB()->name);
     g_builder->addSen(std::move(br));
 
     // 5. move to falseBB. and accept right.
     g_builder->moveToBB(falseBB);
-    return context->lAndExp()->accept(this);
+    g_bbc->pop();
+
+    auto accept = context->lAndExp()->accept(this);
+    auto [rt,rs] = getLastValue(accept);
+    makeSureBool(rt,rs);
+
+    g_sw->isBool=true;
+
+    return 0;
 }
 
 /// lOrExp: lAndExp # lOrExp_

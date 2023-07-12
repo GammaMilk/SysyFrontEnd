@@ -94,6 +94,7 @@ public:
     IRBoolSwitch isBool;
     IRBoolSwitch inIf;
     IRBoolSwitch inWhile;
+    IRBoolSwitch isNewFunc;
 
     IRGlobalSwitch()
         : isConst(std::string("isConst"))
@@ -104,6 +105,7 @@ public:
     , isBool(std::string("isBool"))
     , inIf(std::string("inIf"))
     , inWhile(std::string("inWhile"))
+    , isNewFunc(std::string("isNewFunc"))
     {
     }
 };
