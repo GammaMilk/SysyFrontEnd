@@ -410,8 +410,10 @@ std::any IRVisitor::visitVarDef(SysyParser::VarDefContext* context)
                     auto storeSen = MU<StoreSen>(newLabelS, makeType(type), actualValS);
                     g_builder->addSen(std::move(storeSen));
                 } else {
-                    auto lastLabel = g_builder->getLastLabel();
-                    // TODO we need a store. check type.
+                    auto [t,s] = getLastValue(anyResult);
+                    auto lastLabel = s;
+                    g_builder->checkTypeAndCast(makeType(t), makeType(type), lastLabel);
+                    lastLabel = g_builder->getLastLabel();
                     auto storeSen = MU<StoreSen>(newLabelS, makeType(type), lastLabel);
                     g_builder->addSen(std::move(storeSen));
                 }
@@ -889,7 +891,6 @@ std::any IRVisitor::visitReturn(SysyParser::ReturnContext* context)
     if (context->exp() == nullptr) {
         g_builder->addSen(MU<ReturnSen>("", makeType(IRCtrl::IRValType::Void)));
     } else {
-        // TODO
         auto r           = context->exp()->accept(this);
         auto funcRetType = makeType(g_builder->getFunction()->_type.retType);
         if (g_sw->isCVal.get()) {
@@ -1565,7 +1566,6 @@ std::any IRVisitor::visitFuncRParam(SysyParser::FuncRParamContext* context)
 /// \return
 std::any IRVisitor::visitFuncRParams(SysyParser::FuncRParamsContext* context)
 {
-    // TODO visitFuncRParams
     for (auto r : context->funcRParam()) { r->accept(this); }
     return 0;
 }

@@ -71,7 +71,6 @@ string IRFunction::toString()
     vector<unique_ptr<LocalSen>> allocas;
 
     vector<unique_ptr<LocalSen>> notAllocas;
-    // TODO func BBs
     for (auto& b : bbs) {
         if(b->instructions.empty()) continue ;
         ss << b->name << ":\n";

@@ -18,7 +18,6 @@ string FloatType::toString()
 string ArrayType::toString()
 {
     stringstream ss;
-    // TODO
     size_t numberOfZero = 0;
     size_t bracket      = 0;
     for (auto& x : this->innerShape) {

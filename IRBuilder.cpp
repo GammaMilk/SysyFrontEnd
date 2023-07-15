@@ -15,9 +15,6 @@ IRCtrl::IRBuilder::IRBuilder()
 {
     program = make_shared<IRProgram>();
 
-    //
-    // TODO: Initialize initial functions decl
-
     // declare i32 @getint()
     auto type_i32_void   = MS<FuncType>(IRValType::Int, vector<SPType>{});
     auto type_float_void = MS<FuncType>(IRValType::Float, vector<SPType>{});

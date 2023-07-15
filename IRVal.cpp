@@ -260,8 +260,9 @@ string FPVar::toString()
     } else if (pType == IRValType::Arr) {
         auto   fpArrType   = std::dynamic_pointer_cast<ArrayType>(this->fpType);
         string elemTypeStr = (fpArrType->innerType == IRValType::Float) ? "float" : "i32";
+    } else {
+        RUNTIME_ERROR("Unknown type");
     }
-    // TODO
     return ss.str();
 }
 

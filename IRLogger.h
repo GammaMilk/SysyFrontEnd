@@ -18,7 +18,8 @@ namespace IRCtrl
 extern bool   g_enable_log;
 std::ostream& sysy_debug();
 }   // namespace IRCtrl
-
+#ifndef SYSY_LOGGER
+#define SYSY_LOGGER
 #define ANSI_COLOR_BLUE "\033[1;34m"
 #define ANSI_COLOR_ORANGE "\033[1;33m"
 #define ANSI_COLOR_YELLOW "\033[1;93m"
@@ -59,4 +60,6 @@ std::ostream& sysy_debug();
                     RUNTIME_ERROR(MSG_);     \
                 }\
             } while (0)
+
+#endif   // SYSY_LOGGER
 #endif   // SYSYLEX_IRLOGGER_H
