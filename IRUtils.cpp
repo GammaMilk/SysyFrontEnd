@@ -252,12 +252,13 @@ string Utils::valTypeToStr(IRValType _t)
     case IRValType::Float: return "float";
     case IRValType::Arr: return "";
     case IRValType::Void: return "void";
-    case IRValType::Pointer: return "";
-    case IRValType::FloatArr: return "";
+    case IRValType::Pointer:
+    case IRValType::FloatArr:
     case IRValType::IntArr: return "";
     case IRValType::Bool: return "i1";
     case IRValType::Unknown: return "ERROR";
     }
+    RUNTIME_ERROR("Unknown IRValType"<<(int)_t);
 }
 
 string Utils::floatTo64BitStr(float x)
@@ -339,6 +340,7 @@ string Utils::fcmpOpToStr(FCMPOp _op)
         case FCMPOp::UNO: return "uno";
         case FCMPOp::True: return "true";
     }
+    RUNTIME_ERROR("Unknown fcmp operator"<<(int)_op);
 }
 
 
@@ -352,6 +354,7 @@ T1 Utils::T1OP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Div: return (T1)v1 / v2;
     case IRValOp::Rem: return (T1)v1 % v2;
     }
+    return 0;
 }
 template<class T1, class T2>
 T2 Utils::T2OP(T1 v1, T2 v2, IRValOp op)
@@ -363,6 +366,7 @@ T2 Utils::T2OP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Div: return (T2)v1 / v2;
     case IRValOp::Rem: return (T2)v1 % v2;
     }
+    return 0;
 }
 template<class T1, class T2>
 float Utils::FLOP(T1 v1, T2 v2, IRValOp op)
@@ -374,5 +378,6 @@ float Utils::FLOP(T1 v1, T2 v2, IRValOp op)
     case IRValOp::Div: return (float)v1 / v2;
     case IRValOp::Rem: throw std::invalid_argument("float cannot %");
     }
+    return 0;
 }
 }   // namespace IRCtrl

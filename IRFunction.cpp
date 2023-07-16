@@ -4,6 +4,7 @@
 
 #include "IRFunction.h"
 #include "IRUtils.h"
+#include "IRLogger.h"
 namespace IRCtrl
 {
 string IRFunction::toString()
@@ -72,7 +73,30 @@ string IRFunction::toString()
 
     vector<unique_ptr<LocalSen>> notAllocas;
     for (auto& b : bbs) {
-        if(b->instructions.empty()) continue ;
+        if(b->instructions.empty()) {
+            // add return.
+            switch(this->_type.retType) {
+            case IRValType::Int:
+                b->add(MU<ReturnSen>("0", makeType(IRValType::Int)));
+                break;
+            case IRValType::Float:
+                b->add(MU<ReturnSen>("0x0", makeType(IRValType::Float)));
+                break;
+            case IRValType::Void:
+                b->add(MU<ReturnSen>("", makeType(IRValType::Void)));
+                break;
+
+            // unreachable cases.
+            case IRValType::Pointer:
+            case IRValType::FloatArr:
+            case IRValType::IntArr:
+            case IRValType::Bool:
+            case IRValType::Func:
+            case IRValType::Arr:
+            case IRValType::Unknown:
+                RUNTIME_ERROR("Unreachable cases.");
+            }
+        }
         ss << b->name << ":\n";
         for (auto& s : b->instructions) {
             ss << "    " << s->toString() << "\n";

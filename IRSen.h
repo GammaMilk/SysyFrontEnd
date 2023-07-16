@@ -240,21 +240,21 @@ class GepSen : public LocalSen
 public:
     GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_)
         : t(std::move(t_)),sourceName(std::move(source_))
-        , offset(offset_)
+        , offset(std::move(offset_))
     {
-        _label=outLabel_;setRetType();
+        _label=std::move(outLabel_);setRetType();
     }
     GepSen(string outLabel_, SPType t_, string source_, vector<size_t> offset_, bool dr)
         : t(std::move(t_)),sourceName(std::move(source_))
-        , offset(offset_), dimensionality_reduction(dr)
+        , offset(std::move(offset_)), dimensionality_reduction(dr)
     {
-        _label=outLabel_;setRetType();
+        _label=std::move(outLabel_);setRetType();
     }
     GepSen(string outLabel_, SPType t_, string source_, vector<string> offset_str_, bool dr=false)
         : t(std::move(t_)),sourceName(std::move(source_))
-        , offset_str(offset_str_), dimensionality_reduction(dr)
+        , offset_str(std::move(offset_str_)), dimensionality_reduction(dr)
     {
-        _label=outLabel_;setRetType();
+        _label=std::move(outLabel_);setRetType();
     }
     string toString() override;
 

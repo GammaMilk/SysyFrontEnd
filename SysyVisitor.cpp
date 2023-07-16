@@ -357,7 +357,6 @@ std::any GlobalVarDef(SysyParser::VarDefContext* context, IRVisitor* this_)
 /// \return
 std::any IRVisitor::visitVarDef(SysyParser::VarDefContext* context)
 {
-    g_enable_log = false;
 
     // var's type
     IRCtrl::IRValType type = this->curBType;
@@ -368,7 +367,6 @@ std::any IRVisitor::visitVarDef(SysyParser::VarDefContext* context)
     if (g_lc->isInGlobal()) {
         return GlobalVarDef(context, this);
     } else {
-        g_enable_log = true;
         LOGD("Local Var name == " << idName << ",  type = " << Utils::valTypeToStr(type));
         const string& newLabelS = g_builder->getNewLabel();
         // local single:
@@ -486,11 +484,9 @@ std::any IRVisitor::visitVarDef(SysyParser::VarDefContext* context)
                 // finally add into lc. already inserted before. nothing to do here.
             }
         }
-        g_enable_log = false;
     }
 
     LOGD("Exit VisitVarDef");
-    g_enable_log = true;
     return 0;
 }
 
@@ -592,7 +588,6 @@ std::any IRVisitor::visitInitList(SysyParser::InitListContext* context)
 /// \return
 std::any IRVisitor::visitFuncDef(SysyParser::FuncDefContext* context)
 {
-    g_enable_log = true;
     context->funcType()->accept(this);   // this operation will change this->curBType
 
     // Func name

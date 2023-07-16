@@ -5,17 +5,14 @@
 
 namespace IRCtrl
 {
-std::ofstream g_debug_null_out = std::ofstream("/dev/null");
-bool          g_enable_log     = true;
-std::ostream& sysy_debug()
+static auto   debug_null_out = std::ostream(nullptr);
+LOG_LEVEL     g_log_level    = LOG_LEVEL_DEBUG;
+std::ostream& sysyDebug(LOG_LEVEL level)
 {
-#ifdef _DEBUG
-    if (true)
+    if (level >= g_log_level) {
         return std::cout;
-    else
-        return g_debug_null_out;
-#else
-    return g_debug_null_out;
-#endif
+    } else {
+        return debug_null_out;
+    }
 }
 }   // namespace IRCtrl

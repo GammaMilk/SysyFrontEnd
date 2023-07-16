@@ -52,7 +52,10 @@ int main(int argc, const char** argv)
                 std::cerr << "No output filename" << std::endl;
                 return 1;
             }
-        } else if (arg == "-O1") {
+        } else if (arg == "-O2"  || arg=="-O1" || arg=="-O0") {
+            optimizationLevel = arg;
+        }else if( arg == "-S"){
+            // do nothing
         } else {
             inputFileName = arg;
         }
