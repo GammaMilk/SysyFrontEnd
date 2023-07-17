@@ -70,8 +70,27 @@ string IRFunction::toString()
     ss << ") {\n";
 
     vector<unique_ptr<LocalSen>> allocas;
-
     vector<unique_ptr<LocalSen>> notAllocas;
+    // when generate code, we must put all the alloca at the beginning of the function.
+    // it is LEntry block.
+    // first, we gather all the alloca.
+    for(auto& b : bbs) {
+        for(auto& s : b->instructions) {
+            if(s->getOp()==IROp::ALLOCA) {
+                allocas.push_back(std::move(s));
+            }
+        }
+    }
+    // 2. find LEntry block.
+    for(auto& b : bbs) {
+        if(b->name=="LEntry") {
+            // 3. insert all the alloca to LEntry block.
+            for(auto t=allocas.rbegin();t!=allocas.rend();t++) {
+                b->instructions.insert(b->instructions.begin(), std::move(*t));
+            }
+            break;
+        }
+    }
     for (auto& b : bbs) {
         if(b->instructions.empty()) {
             // add return.
@@ -99,24 +118,10 @@ string IRFunction::toString()
         }
         ss << b->name << ":\n";
         for (auto& s : b->instructions) {
+            if(s== nullptr) continue ;
             ss << "    " << s->toString() << "\n";
             if(isTerminal(*s)) break ;
         }
-        //        for (auto& instruction : b->instructions) {
-        //            auto x = std::move(instruction);
-        //            if (x->getOp() == IROp::ALLOCA) {
-        //                allocas.emplace_back(std::move(x));
-        //            } else {
-        //                notAllocas.emplace_back(std::move(x));
-        //            }
-        //        }
-        //        for (auto& x : allocas) { ss << "    " << x->toString() << "\n"; }
-        //        for (auto& x : notAllocas) {
-        //            ss << "    " << x->toString() << "\n";
-        //            //        }
-        //            ss << "\n";
-        //        }
-
     }
     ss << "}\n";
     return ss.str();
