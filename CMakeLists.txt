@@ -17,6 +17,8 @@ if (WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -MT")
 endif (WIN32)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+# -Wl,--stack,<stack_size_in_bytes>
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack,4000000")
 # add source files like CBaseListener.cpp, CBaseVisitor.cpp, etc.
 file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/*.cpp)
 

@@ -1320,7 +1320,7 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
 
                             if (g_sw->needLLValLoad) return 2;
 
-                            auto loadSen = MU<LoadSen>(g_builder->getNewLabel(), makeType(VT_INT), s2Label
+                            auto loadSen = MU<LoadSen>(g_builder->getNewLabel(), g_builder->getLastSen()->_retType, s2Label
                             );
                             g_builder->addSen(std::move(loadSen));
                             g_sw->isCVal = false;
