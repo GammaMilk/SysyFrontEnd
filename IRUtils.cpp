@@ -97,9 +97,12 @@ inline shared_ptr<CVal>& getValInACArrRef(
 )
 {
     shared_ptr<CArr> arr = arr_;
+    auto subArrShape     = shape;
+    // init for first to last-1 dim. because last-1 is CVal not CArr.
     for (auto p = 0; p < pos.size() - 1; p++) {
         // init
         if (arr->_childArrs.empty()) {
+            arr->_shape = subArrShape;
             for (auto i = 0; i < arr->_shape.front(); i++) {
                 arr->witch.emplace_back(CArr::ZERO);
                 arr->_childVals.emplace_back(nullptr);
@@ -110,16 +113,15 @@ inline shared_ptr<CVal>& getValInACArrRef(
         // insert
         if (arr->_childArrs[pos[p]] == nullptr) {
             arr->_childArrs[pos[p]] = make_shared<CArr>("", arr->containedType);
-            auto subArrShape        = shape;
-            subArrShape.pop_front();
-            arr->_childArrs[pos[p]]->_shape = subArrShape;
         }
         arr->witch[pos[p]] = CArr::CARR;
         arr                = arr->_childArrs[pos[p]];   // attention
+        subArrShape.pop_front();
     }
-    // init twice
+    // last layer (CVal)
     if (arr->_childArrs.empty()) {
-        for (auto i = 0; i < arr->_shape.front(); i++) {
+        arr->_shape = subArrShape;
+        for (auto i = 0; i < arr->_shape.back(); i++) {
             arr->witch.emplace_back(CArr::ZERO);
             arr->_childVals.emplace_back(nullptr);
             arr->_childArrs.emplace_back(nullptr);
