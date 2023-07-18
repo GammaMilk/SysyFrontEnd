@@ -1459,6 +1459,27 @@ std::any IRVisitor::visitNumber(SysyParser::NumberContext* context)
     }
 }
 
+/// **宏，老子需要特殊处理，还得搁着自行展开。
+/// \param context
+void IRVisitor::visitSysyTimerFunc(SysyParser::CallContext* context)
+{
+    auto lineno = context->getStart()->getLine();
+    auto idName = context->Ident()->getText();
+    if (idName == "starttime") {
+        idName = "_sysy_starttime";
+    } else {
+        idName = "_sysy_stoptime";
+    }
+    vector<string> argNames{std::to_string(lineno)};
+    auto           func = g_builder->getFunction(idName);
+    // 这我**的都写完了，都万事大吉了，还想让老子改这*屎山？
+    // 纯纯的**。
+    string outLabel = func->_type.retType == IRValType::Void ? "" : g_builder->getNewLabel();
+    auto   call =
+        MU<CallSen>(outLabel, idName, func->_type.retType, func->_type.paramsType, argNames);
+    g_builder->addSen(std::move(call));
+    g_sw->isCVal = false;
+}
 
 /// Ident Lparen funcRParams? Rparen	# call
 /// \param context
@@ -1466,7 +1487,13 @@ std::any IRVisitor::visitNumber(SysyParser::NumberContext* context)
 std::any IRVisitor::visitCall(SysyParser::CallContext* context)
 {
     string idName = context->Ident()->getText();
-    auto   func   = g_builder->getFunction(idName);
+    // 对于starttime()和stoptime()两个**宏，老子需要特殊处理，还得搁着自行展开。
+    // 赛事组就不能先把代码里的此等东西自行替换了？纯你妈**。**！
+    if (idName == "starttime" || idName == "stoptime") {
+        visitSysyTimerFunc(context);
+        return 0;
+    }
+    auto func = g_builder->getFunction(idName);
     if (func == nullptr) { throw std::runtime_error("Function " + idName + " not found!"); }
     size_t nParams = 0;
     if (context->funcRParams() != nullptr) {

@@ -287,13 +287,15 @@ public:
     bool              hasArrayAccessed = false;
 
     // only for local array def.
-    std::vector<size_t> curShape;
-    std::vector<size_t> curArrayPos;
-    size_t curArrayDim;
-    string curArrId;
+    std::vector<size_t>        curShape;
+    std::vector<size_t>        curArrayPos;
+    size_t                     curArrayDim;
+    string                     curArrId;
     shared_ptr<IRCtrl::IRType> curArrType;
     // end  for local array def
 
+    // for _sysy_....
+    static void visitSysyTimerFunc(SysyParser::CallContext* context);
 };
 
 // utils
