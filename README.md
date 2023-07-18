@@ -6,7 +6,7 @@
 - [x] code generation
 - [ ] optimization
 
-## Usage:
+## Usage
 
 ### Clone and compile
 
@@ -21,8 +21,16 @@ make -j8
 ### Use the compiler(Now it can only generate LLVMIR code)
 
 ```bash
-./SysyLex -S <SourceFilePath> [-O1|-O2|-O0] [-arm] -o <OutputFilePath>
+./SysyLex -S <SourceFilePath> [-O1|-O2|-O0] [-arm] [-dso] -o <OutputFilePath>
 ```
+
+Explanation:
+
+- The `-Ox` option is used to specify the optimization level of the compiler.
+- The `-arm` option is used to generate the `arm_aapcs_vfpcc` attribute in the Intermediate Representation (IR). The
+  option will be ignored while generating ASM.
+- The `-dso` option is used to generate the `dso_local` attribute in the Intermediate Representation (IR). The option
+  will be ignored while generating ASM.
 
 ## ⚠ Attention ⚠
 
