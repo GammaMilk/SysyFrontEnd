@@ -5,6 +5,7 @@
 #include "IRSen.h"
 #include "IRUtils.h"
 #include "IRLogger.h"
+#include "IRGlobal.h"
 
 
 namespace IRCtrl
@@ -216,7 +217,7 @@ string CallSen::toString()
     //   %v6 = call i32 @foo2(i32* %v5)
     if (_retType->type != IRValType::Void) { ss << _label << " = "; }
     ss << "call ";
-    if (IRSW_ENABLE_ARM_AAPCS_VFPCC) { ss << "arm_aapcs_vfpcc "; }
+    if (IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC) { ss << "arm_aapcs_vfpcc "; }
     ss << _retType->toString() << " @" << funcName << "(";
     for (int i = 0; i < argTypes.size(); i++) {
         ss << argTypes[i]->toString() << " " << argNames[i];
