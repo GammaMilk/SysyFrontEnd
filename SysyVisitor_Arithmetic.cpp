@@ -130,11 +130,23 @@ std::any IRVisitor::visitDiv(SysyParser::DivContext* context)
         }
         // not all const.......Let's gen some sentences.
         else {
-            if ((lt == VT_INT && rt != VT_INT) || (lt == VT_FLOAT && rt != VT_FLOAT)) {
-                g_builder->checkTypeAndCast(rt, lt, rs);
-                rs = g_builder->getLastLabel();
+            // 他妈的。我们这里不能只看左边是啥就是啥类型。草他妈的。
+            // 坑死老子了。我草。
+            // shit.
+            // 我们这里要看左右两边的类型，如果左边是int，右边是float，那么我们要把右边转成int。
+            // 以前是这么干的。现在环境变了。草。如果两边有其中一边是他妈浮点，那么就得把另一边转换成浮点。
+            // 我说的怎么他妈的第95个测试点过不了
+            auto arithmeticType = lt;
+            if (lt == VT_INT && rt == VT_FLOAT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, ls);
+                ls             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
+            } else if (lt == VT_FLOAT && rt == VT_INT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, rs);
+                rs             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
             }
-            g_builder->addDiv(makeType(lt), ls, rs);
+            g_builder->addDiv(makeType(arithmeticType), ls, rs);
             g_sw->isCVal = false;
         }
     }
@@ -220,11 +232,17 @@ std::any IRVisitor::visitMul(SysyParser::MulContext* context)
         }
         // not all const.......Let's gen some sentences.
         else {
-            if ((lt == VT_INT && rt != VT_INT) || (lt == VT_FLOAT && rt != VT_FLOAT)) {
-                g_builder->checkTypeAndCast(rt, lt, rs);
-                rs = g_builder->getLastLabel();
+            auto arithmeticType = lt;
+            if (lt == VT_INT && rt == VT_FLOAT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, ls);
+                ls             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
+            } else if (lt == VT_FLOAT && rt == VT_INT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, rs);
+                rs             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
             }
-            g_builder->addMul(makeType(lt), ls, rs);
+            g_builder->addMul(makeType(arithmeticType), ls, rs);
         }
         g_sw->isCVal = false;
     }
@@ -269,11 +287,17 @@ std::any IRVisitor::visitAdd(SysyParser::AddContext* context)
         }
         // not all const.......Let's gen some sentences.
         else {
-            if ((lt == VT_INT && rt != VT_INT) || (lt == VT_FLOAT && rt != VT_FLOAT)) {
-                g_builder->checkTypeAndCast(rt, lt, rs);
-                rs = g_builder->getLastLabel();
+            auto arithmeticType = lt;
+            if (lt == VT_INT && rt == VT_FLOAT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, ls);
+                ls             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
+            } else if (lt == VT_FLOAT && rt == VT_INT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, rs);
+                rs             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
             }
-            g_builder->addAdd(makeType(lt), ls, rs);
+            g_builder->addAdd(makeType(arithmeticType), ls, rs);
             g_sw->isCVal = false;
         }
     }
@@ -315,11 +339,17 @@ std::any IRVisitor::visitSub(SysyParser::SubContext* context)
         }
         // not all const.......Let's gen some sentences.
         else {
-            if ((lt == VT_INT && rt != VT_INT) || (lt == VT_FLOAT && rt != VT_FLOAT)) {
-                g_builder->checkTypeAndCast(rt, lt, rs);
-                rs = g_builder->getLastLabel();
+            auto arithmeticType = lt;
+            if (lt == VT_INT && rt == VT_FLOAT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, ls);
+                ls             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
+            } else if (lt == VT_FLOAT && rt == VT_INT) {
+                g_builder->checkTypeAndCast(VT_INT, VT_FLOAT, rs);
+                rs             = g_builder->getLastLabel();
+                arithmeticType = VT_FLOAT;
             }
-            g_builder->addSub(makeType(lt), ls, rs);
+            g_builder->addSub(makeType(arithmeticType), ls, rs);
             g_sw->isCVal = false;
         }
     }
