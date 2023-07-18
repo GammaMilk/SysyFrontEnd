@@ -34,7 +34,6 @@ using tree::TerminalNode;
 constexpr bool      is_debug    = true;
 static std::ostream null_stream = std::ostream(nullptr);
 
-
 int main(int argc, const char** argv)
 {
     std::string inputFileName;
@@ -52,10 +51,12 @@ int main(int argc, const char** argv)
                 std::cerr << "No output filename" << std::endl;
                 return 1;
             }
-        } else if (arg == "-O2"  || arg=="-O1" || arg=="-O0") {
+        } else if (arg == "-O2" || arg == "-O1" || arg == "-O0") {
             optimizationLevel = arg;
-        }else if( arg == "-S"){
+        } else if (arg == "-S") {
             // do nothing
+        } else if (arg == "-arm") {
+            IRCtrl::IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC = true;
         } else {
             inputFileName = arg;
         }
@@ -76,7 +77,7 @@ int main(int argc, const char** argv)
         cout << "no such inputStream" << endl;
         return 0;
     }
-    LOGD("File Fine."<< inputFileName);
+    LOGD("File Fine." << inputFileName);
     ANTLRInputStream  input(inputStream);
     SysyLexer         lexer(&input);
     CommonTokenStream tokens(&lexer);

@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 #SET(CMAKE_BUILD_TYPE Debug)
 
+# Enable ARM format LLVMIR output
+if (IRSW_ENABLE_ARM_AAPCS_VFPCC)
+    add_compile_definitions(IRSW_ENABLE_ARM_AAPCS_VFPCC)
+endif ()
+
 find_package(Threads REQUIRED)
 
 # add antlr4
@@ -23,8 +28,7 @@ if (WIN32)
 endif (WIN32)
 # add source files like CBaseListener.cpp, CBaseVisitor.cpp, etc.
 file(GLOB SRC_LIST_SYSY ${PROJECT_SOURCE_DIR}/*.cpp)
-
-add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY} SysyVisitor_Cond.cpp SysyVisitor_Arithmetic.cpp)
+add_executable(${PROJECT_NAME} ${SRC_LIST_SYSY})
 target_include_directories(${PROJECT_NAME} PUBLIC /usr/local/include/antlr4-runtime)
 target_link_libraries(${PROJECT_NAME} antlr4-runtime)
 target_link_libraries(${PROJECT_NAME} Threads::Threads)

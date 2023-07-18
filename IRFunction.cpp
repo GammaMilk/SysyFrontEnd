@@ -5,6 +5,7 @@
 #include "IRFunction.h"
 #include "IRUtils.h"
 #include "IRLogger.h"
+#include "IRGlobal.h"
 namespace IRCtrl
 {
 string IRFunction::toString()
@@ -15,13 +16,14 @@ string IRFunction::toString()
         SPBasicBlock curBB;
         FuncType _type;
      */
-
+    string arm_tag;
+    if (IRCtrl::IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC) arm_tag = "arm_aapcs_vfpcc ";
     if (onlyDecl) {
         // declare void @putarray(i32, i32*)
         stringstream ss;
         string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
         // declare i32 @funcName(
-        ss << "declare " << retTypeStr << " @" << this->name << "(";
+        ss << "declare " << arm_tag << retTypeStr << " @" << this->name << "(";
         // i32, i32*
         size_t labelNum = 0;
         for (auto& t : this->_type.paramsType) {
@@ -45,7 +47,7 @@ string IRFunction::toString()
     stringstream ss;
     string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
     // define i32 @funcName(
-    ss << "define " << retTypeStr << " @" << this->name << "(";
+    ss << "define " << arm_tag << retTypeStr << " @" << this->name << "(";
     // i32 %arg_0, [59 x i32]* %arg_1,
     size_t labelNum = 0;
     for (auto& t : this->_type.paramsType) {
