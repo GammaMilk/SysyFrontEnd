@@ -23,7 +23,9 @@ string IRFunction::toString()
         stringstream ss;
         string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
         // declare i32 @funcName(
-        ss << "declare " << arm_tag << retTypeStr << " @" << this->name << "(";
+        ss << "declare ";
+        if (IRCtrl::IR_SWITCH_ENABLE_DSO_LOCAL) ss << "dso_local ";
+        ss << arm_tag << retTypeStr << " @" << this->name << "(";
         // i32, i32*
         size_t labelNum = 0;
         for (auto& t : this->_type.paramsType) {
@@ -47,7 +49,9 @@ string IRFunction::toString()
     stringstream ss;
     string       retTypeStr = Utils::valTypeToStr(this->_type.retType);
     // define i32 @funcName(
-    ss << "define " << arm_tag << retTypeStr << " @" << this->name << "(";
+    ss << "define ";
+    if (IRCtrl::IR_SWITCH_ENABLE_DSO_LOCAL) ss << "dso_local ";
+    ss << arm_tag << retTypeStr << " @" << this->name << "(";
     // i32 %arg_0, [59 x i32]* %arg_1,
     size_t labelNum = 0;
     for (auto& t : this->_type.paramsType) {

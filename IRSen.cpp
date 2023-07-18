@@ -21,6 +21,7 @@ string GlobalValDeclSen::toString()
 {
     stringstream ss;
     ss << "@" << this->val->name << " = ";
+    if (IRCtrl::IR_SWITCH_ENABLE_DSO_LOCAL) { ss << "dso_local "; }
     if (this->val->isConst)
         ss << "constant";
     else

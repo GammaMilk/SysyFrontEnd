@@ -57,6 +57,8 @@ int main(int argc, const char** argv)
             // do nothing
         } else if (arg == "-arm") {
             IRCtrl::IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC = true;
+        } else if (arg == "-dso") {
+            IRCtrl::IR_SWITCH_ENABLE_DSO_LOCAL = true;
         } else {
             inputFileName = arg;
         }

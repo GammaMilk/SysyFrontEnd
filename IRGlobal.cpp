@@ -10,4 +10,10 @@ bool IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC = true;
 bool IR_SWITCH_ENABLE_ARM_AAPCS_VFPCC = false;
 #endif
 
+#ifdef IRSW_ENABLE_DSO_LOCAL
+bool IR_SWITCH_ENABLE_DSO_LOCAL = true;
+#else
+bool IR_SWITCH_ENABLE_DSO_LOCAL       = false;
+#endif
+
 }   // namespace IRCtrl
