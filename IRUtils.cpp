@@ -295,7 +295,8 @@ std::tuple<size_t, int, float> Utils::parseCVal(const shared_ptr<CVal>& cVal)
 }
 string Utils::localConstName(const string& functionName, const string& idName)
 {
-    return "__const." + functionName + "." + idName;
+    static int id = 0;
+    return "__const."+std::to_string(id++)+"." + functionName + "." + idName;
 }
 
 /// \brief Get string representation of a icmp operator

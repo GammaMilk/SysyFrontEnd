@@ -101,6 +101,9 @@ size_t IRLayerController::getCurLayerNum()
     assert(!_layers.empty());
     return _layers.size()-1;
 }
+void IRLayerController::push(const string& name, const shared_ptr<IRVal>& val) {
+    this->_layers[_layers.size() - 1].symbols.insert(std::make_pair(name, val));
+}
 
 
 }   // namespace IRCtrl

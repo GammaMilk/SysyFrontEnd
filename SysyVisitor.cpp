@@ -179,7 +179,8 @@ std::any IRVisitor::visitConstDef(SysyParser::ConstDefContext* context)
                     // Can we init like this way???
 
                     auto thisIntConstVal = std::make_shared<IntCVal>(localConstIdName, num);
-                    g_lc->pushGlobal(thisIntConstVal);
+                    thisIntConstVal->id="@"+localConstIdName;
+                    g_lc->push(idName,thisIntConstVal);
                     g_builder->getProgram()->addGlobalConst(thisIntConstVal);
                 }
             } else {
@@ -198,9 +199,10 @@ std::any IRVisitor::visitConstDef(SysyParser::ConstDefContext* context)
                     string funcName         = g_builder->getFunction()->name;
                     auto   localConstIdName = Utils::localConstName(funcName, idName);
                     // Can we init like this way???
-                    auto thisIntConstVal = std::make_shared<FloatCVal>(localConstIdName, num);
-                    g_lc->pushGlobal(thisIntConstVal);
-                    g_builder->getProgram()->addGlobalConst(thisIntConstVal);
+                    auto thisFloatConstVal = std::make_shared<FloatCVal>(localConstIdName, num);
+                    thisFloatConstVal->id="@"+localConstIdName;
+                    g_lc->push(idName, thisFloatConstVal); // just put it in local variable layer.
+                    g_builder->getProgram()->addGlobalConst(thisFloatConstVal);
                 }
             }
 
@@ -235,8 +237,8 @@ std::any IRVisitor::visitConstDef(SysyParser::ConstDefContext* context)
                 auto             thisArrGlobalName = Utils::localConstName(funcName, idName);
                 thisArr                            = Utils::buildAnCArrFromInitList(iList, shape);
                 thisArr->name                      = thisArrGlobalName;
-                thisArr->id                        = thisArrGlobalName;
-                g_lc->pushGlobal(thisArr);
+                thisArr->id                        = "@"+thisArrGlobalName;
+                g_lc->push(idName,thisArr);
                 g_builder->getProgram()->addGlobalConst(thisArr);
             }
         }
@@ -953,8 +955,8 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
             shared_ptr<IRVal> t = g_lc->queryLocal(idName);
             if (t == nullptr) {
                 // 2. query global.
-                if(g_sw->isInFunc)
-                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+//                if(g_sw->isInFunc)
+//                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
                 if (t == nullptr) t = g_lc->query(idName);
                 assert(t != nullptr);
             }
@@ -971,8 +973,8 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
             shared_ptr<IRVal> t = g_lc->queryLocal(idName);
             if (t == nullptr) {
                 // 2. query global.
-                if(g_sw->isInFunc)
-                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+//                if(g_sw->isInFunc)
+//                    t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
                 if (t == nullptr) t = g_lc->query(idName);
                 assert(t != nullptr);
             }
@@ -990,8 +992,8 @@ std::any IRVisitor::visitLVal(SysyParser::LValContext* context)
         shared_ptr<IRVal> t       = g_lc->queryLocal(idName);
         if (t == nullptr) {
             // query global.
-            if(g_sw->isInFunc)
-                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
+//            if(g_sw->isInFunc)
+//                t = g_lc->queryLocalConst(idName, g_builder->getFunction()->name);
             if (t == nullptr) t = g_lc->query(idName);
             IR_ASSERT(t != nullptr, "lVal: " << idName << " not found.");
             isLocal  = false;

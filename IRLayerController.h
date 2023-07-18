@@ -29,6 +29,7 @@ public:
      * @param val the target val
      */
     void push(const std::shared_ptr<IRVal>& val);
+    void push(const string& name, const std::shared_ptr<IRVal>& val);
     void pushGlobal(const std::shared_ptr<IRVal>& val);
 
     std::shared_ptr<IRVal> query(const std::shared_ptr<IRVal>& val, bool recursively = true);
@@ -39,7 +40,7 @@ public:
     //    true);
     std::shared_ptr<IRVal> queryLocal(const string& symbol_name, bool recursively = true);
 
-    std::shared_ptr<IRVal> queryLocalConst(
+    [[deprecated("Use query. because LocalConst are stored in THIS layer, NOT GLOBAL layer.")]] std::shared_ptr<IRVal> queryLocalConst(
         const std::string& symbol_name, const std::string& functionName
     );
 
