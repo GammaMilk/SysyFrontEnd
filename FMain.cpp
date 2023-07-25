@@ -18,10 +18,8 @@
 #include "SysyParser.h"
 #include "SysyVisitor.h"
 #include "antlr4-runtime.h"
-#include "tree/AbstractParseTreeVisitor.h"
 #include "tree/ParseTree.h"
 #include "IRLogger.h"
-#include "IRBuilder.h"
 #include "IRGlobal.h"
 
 using namespace antlrcpp;
@@ -31,14 +29,29 @@ using std::endl;
 using tree::ErrorNode;
 using tree::ParseTree;
 using tree::TerminalNode;
-constexpr bool      is_debug    = true;
-static std::ostream null_stream = std::ostream(nullptr);
+
+void frontEnd(std::istream& in, std::ostream& out, string filename = "")
+{
+    ANTLRInputStream  f_input(in);
+    SysyLexer         f_lexer(&f_input);
+    CommonTokenStream f_tokens(&f_lexer);
+
+    SysyParser                   f_parser(&f_tokens);
+    SysyParser::CompUnitContext* f_tree = f_parser.compUnit();
+
+    auto irVisitor = IRVisitor();
+    f_tree->accept(&irVisitor);
+
+    IRCtrl::g_builder->setFilename(filename);
+    IRCtrl::g_builder->build(out);
+}
 
 int main(int argc, const char** argv)
 {
-    std::string inputFileName;
-    std::string outputFileName;
-    std::string optimizationLevel;
+    std::string  inputFileName;
+    std::string  outputFileName;
+    std::string  optimizationLevel;
+    stringstream irStream;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
@@ -63,7 +76,7 @@ int main(int argc, const char** argv)
             inputFileName = arg;
         }
     }
-    if (!inputFileName.empty()) { LOGD("input: " << inputFileName); }
+    if (!inputFileName.empty()) { LOGD("f_input: " << inputFileName); }
 
     // 处理缺省参数
     if (inputFileName.empty()) { inputFileName = "../testsrc/1.c"; }
@@ -80,21 +93,18 @@ int main(int argc, const char** argv)
         return 0;
     }
     LOGD("File Fine." << inputFileName);
-    ANTLRInputStream  input(inputStream);
-    SysyLexer         lexer(&input);
-    CommonTokenStream tokens(&lexer);
+    // ----------------------命令行参数解析结束-----------------------
 
-    SysyParser                   parser(&tokens);
-    SysyParser::CompUnitContext* tree = parser.compUnit();
+    // -------------------------前端--------------------------------
+    frontEnd(inputStream, irStream, inputFileName);
 
-    auto irVisitor = IRVisitor();
-    tree->accept(&irVisitor);
+    // ---------------前端结果输出到了irStream中----------------------
 
-    cout << endl;
+    // -------------------------后端--------------------------------
 
-    IRCtrl::g_builder->setFilename(sourceFileName);
-    IRCtrl::g_builder->build(outputStream);
+    outputStream << irStream.str();
 
+    // ------------------后端输出到outputStream----------------------
 
     outputStream.close();
     return 0;
